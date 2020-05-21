@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.1" xmlns="http://xmlns.jcp.org/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd">
+  <persistence-unit name="${DB_PU1.jpa.datasource}" transaction-type="RESOURCE_LOCAL">
+    <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+    <class>com.tatsinktechnologic.beans_entity.Mo_Message</class>
+    <exclude-unlisted-classes>false</exclude-unlisted-classes>
+    <properties>
+      <!-- Configuring JDBC properties -->
+      <property name="javax.persistence.jdbc.url" value="${DB_PU1.jpa.url}"/>
+      <property name="javax.persistence.jdbc.user" value="${DB_PU1.jpa.user}"/>
+      <property name="javax.persistence.jdbc.password" value="${DB_PU1.jpa.password}"/>
+      <property name="javax.persistence.jdbc.driver" value="${DB_PU1.jpa.driver}"/>
+      <property name="javax.persistence.lock.timeout" value="0"/>
+      <!--
+      <property name="javax.persistence.schema-generation.database.action" value="drop"/>
+      -->
+      <!-- Hibernate properties -->
+      <property name="hibernate.dialect" value="${DB_PU1.jpa.dialect}"/>
+      <property name="hibernate.cache.provider_class" value="org.hibernate.cache.NoCacheProvider"/>
+      <property name="hibernate.format_sql" value="${DB_PU1.jpa.format_sql}"/>
+      <property name="hibernate.use_sql_comments" value="${DB_PU1.jpa.use_sql_comments}"/>
+      <property name="hibernate.generate_statistics" value="${DB_PU1.jpa.generate_statistics}"/>
+      <property name="hibernate.show_sql" value="${DB_PU1.jpa.show_sql}"/>
+      <property name="hibernate.connection.shutdown" value="${DB_PU1.jpa.connection.shutdown}"/>
+      <property name="hibernate.hbm2ddl.auto" value="update"/>
+      <!-- 
+       
+      hibernate.hbm2ddl.auto vaulue = create | update | validate | create-drop
+
+        Following is the explanation of the behaviour shown by these value:
+
+        create :- create the schema, the data previously present (if there) in the schema is lost
+        update:- update the schema with the given values.
+        validate:- validate the schema. It makes no change in the DB.
+        create-drop:- create the schema with destroying the data previously present(if there). It also drop the database schema when the SessionFactory is closed.
+
+      -->
+      <!-- Configuring Connection Pool -->
+      <property name="hibernate.connection.provider_class" value="org.hibernate.hikaricp.internal.HikariCPConnectionProvider"/>
+           
+      <!-- Maximum waiting time for a connection from the pool -->
+      <property name="hibernate.hikari.connectionTimeout" value="${DB_PU1.jpa.hikari.timeout}"/>
+      <!-- Minimum number of ideal connections in the pool -->
+      <property name="hibernate.hikari.minimumIdle" value="${DB_PU1.jpa.hikari.minimumIdle}"/>
+      <!-- Maximum number of actual connection in the pool -->
+      <property name="hibernate.hikari.maximumPoolSize" value="${DB_PU1.jpa.hikari.maximumPoolSize}"/>
+      <!-- Maximum time that a connection is allowed to sit ideal in the pool -->
+      <property name="hibernate.hikari.idleTimeout" value="${DB_PU1.jpa.hikari.idleTimeout}"/>
+      
+    </properties>
+  </persistence-unit>
+</persistence>

@@ -1,0 +1,52 @@
+<view_api>
+      <url>http://127.0.0.1:9125/</url>
+	  <uri_auth>/authentication/auth</uri_auth>
+	  <uri_service>/apiservice/charge</uri_service>
+	  <client_name>user_name</client_name>
+	  <password>pass</password>
+	  <webservice_name>charge</webservice_name> 
+	  <webservice_timeout>60</webservice_timeout>
+
+	  <!-- we use to set msisdn tag -->
+	  <tag name="msidn" var="%msisdn%">
+			<tag_name>msisdn</tag_name>
+			<tag_value>%msisdn%</tag_value>
+			<tag_attr>
+				<attr_name>client</attr_name>
+				<attr_value>%client%</attr_value>
+			</tag_attr>
+			<tag_attr>
+				<attr_name>input</attr_name>
+				<attr_value>%input%</attr_value>
+			</tag_attr>
+	 </tag>
+		
+	<!-- we use to set fee tag -->
+	<tag name="fee" var="%fee%">
+		<tag_name>fee</tag_name>
+		<tag_value>%fee%</tag_value>
+		<tag_attr>
+			<attr_name>client</attr_name>
+			<attr_value>%client%</attr_value>
+		</tag_attr>
+		<tag_attr>
+			<attr_name>input</attr_name>
+			<attr_value>%input%</attr_value>
+		</tag_attr>
+	</tag>
+	
+	<!-- we use to set description information tag -->
+	<tag name="description" var="%description%">
+		<tag_name>description</tag_name>
+		<tag_value>%description%</tag_value>
+		<tag_attr>
+			<attr_name>client</attr_name>
+			<attr_value>%client%</attr_value>
+		</tag_attr>
+		<tag_attr>
+			<attr_name>input</attr_name>
+			<attr_value>%input%</attr_value>
+		</tag_attr>
+	</tag>
+
+</view_api>

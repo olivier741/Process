@@ -1,0 +1,35 @@
+<charging_api>
+      <!--  url to connect on API Gateway -->
+      <url>http://127.0.0.1:9125</url>
+	  
+	  <!--  path to get token of API Gateway -->
+	  <uri_auth>/authentication/auth</uri_auth>
+	  
+	  <!--  path to get service -->
+	  <uri_service>/api_service/sendRequest</uri_service>
+	  
+	  <!--  clien name use in API Gateway-->
+	  <client_name>flash_sms</client_name>
+	  
+	  <!--  user and password account in API Gateway-->
+	  <user>flash</user>
+	  
+	  <password>flash@123</password>
+	  
+	  <!--  block Webservice requested in API Gateway-->
+	  <webservice_name>CHARGE</webservice_name>
+	  
+	  <!--  connection timeout  API Gateway-->
+	  <webservice_con_timeout>6000</webservice_con_timeout>
+	  
+	  <!--  request timeout in API Gateway -->
+	  <webservice_req_timeout>6000</webservice_req_timeout>
+
+	  <!--  alias in request in API Gateway -->
+	  <alias>
+			<msisdn>_msisdn_</msisdn>
+			<fee>_fee_</fee>
+			<description>_description_</description>
+	  </alias> 
+		
+</charging_api>

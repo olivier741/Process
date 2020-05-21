@@ -1,0 +1,17 @@
+#datasource DB_PU1
+DB_PU1.jpa.url=jdbc:mysql://localhost/olivier_test
+DB_PU1.jpa.user=olivier
+DB_PU1.jpa.password=Olivier123
+DB_PU1.jpa.driver=com.mysql.cj.jdbc.Driver
+DB_PU1.jpa.format_sql=true
+DB_PU1.jpa.use_sql_comments=true
+DB_PU1.jpa.generate_statistics=true
+DB_PU1.jpa.show_sql=true
+DB_PU1.jpa.connection.shutdown=true
+#DB_PU1.jpa.dialect=org.hibernate.dialect.MariaDB53Dialect
+DB_PU1.jpa.c3p0.min_size=5
+DB_PU1.jpa.c3p0.max_size=20
+DB_PU1.jpa.c3p0.timeout=500
+DB_PU1.jpa.c3p0.acquire_increment=5
+DB_PU1.jpa.c3p0.max_statements=50
+DB_PU1.jpa.c3p0.idle_test_period=300

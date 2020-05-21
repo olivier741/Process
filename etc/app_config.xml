@@ -1,0 +1,51 @@
+<application>
+
+    <kafka>
+	   <numberRecord>100</numberRecord>
+	   <consumer_topic>mo-chocho</consumer_topic>
+	   <producer_topic>mt-chocho</producer_topic>
+   </kafka>
+   
+   <receiver_thread>
+	 <numberThread>1</numberThread>
+	 <threadPool>1</threadPool>
+	 <sleep_duration>2000</sleep_duration>
+   </receiver_thread>
+   
+  
+   <sender_thread>
+	 <numberThread>1</numberThread>
+	 <threadPool>1</threadPool>
+	 <sleep_duration>20</sleep_duration>
+	 <maxQueue>100</maxQueue>
+   </sender_thread>
+   
+   <process_thread_reg>
+	 <numberThread>1</numberThread>
+	 <threadPool>1</threadPool>
+	 <sleep_duration>20</sleep_duration>
+	 <maxQueue>100</maxQueue>
+   </process_thread_reg>
+   
+   <process_thread_del>
+	 <numberThread>1</numberThread>
+	 <threadPool>1</threadPool>
+	 <sleep_duration>20</sleep_duration>
+	 <maxQueue>100</maxQueue>
+   </process_thread_del>
+   
+   <process_thread_check>
+	 <numberThread>1</numberThread>
+	 <threadPool>1</threadPool>
+	 <sleep_duration>20</sleep_duration>
+	 <maxQueue>100</maxQueue>
+   </process_thread_check>
+   
+   <process_thread_guide>
+	 <numberThread>1</numberThread>
+	 <threadPool>1</threadPool>
+	 <sleep_duration>20</sleep_duration>
+	 <maxQueue>100</maxQueue>
+   </process_thread_guide>
+
+</application>

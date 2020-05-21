@@ -1,0 +1,85 @@
+<charging_api>
+      <url>http://127.0.0.1:9125</url>
+	  <uri_auth>/authentication/auth</uri_auth>
+	  <uri_service>/api_service/sendRequest</uri_service>
+	  <client_name>flash_sms</client_name>
+	  <password>flash@123</password>
+	  <webservice_name>CHARGE</webservice_name>
+	  <webservice_timeout>600</webservice_timeout>
+
+	  <!-- we use to set msisdn tag 
+	  <tag name="msisdn" var="%msisdn%">
+			<tag_name>msisdn</tag_name>
+			<tag_value>%msisdn%</tag_value>
+	 </tag> -->
+	 
+	 
+	  <!-- we use to set msisdn tag  -->
+	  <tag name="msisdn" var="%msisdn%">
+			<tag_name>param</tag_name>
+			<tag_attr>
+				<attr_name>name</attr_name>
+				<attr_value>input</attr_value>
+			</tag_attr>
+			<tag_attr>
+				<attr_name>value</attr_name>
+				<attr_value>%msisdn%|PROFESSIONAL_NUMBER|%description%|10|%fee%|26|%description%</attr_value>
+			</tag_attr>
+	 </tag> 
+		
+	<!-- we use to set fee tag 
+	<tag name = "fee" var="%fee%">
+		<tag_name>fee</tag_name>
+		<tag_value>%fee%</tag_value>
+		<tag_attr>
+			<attr_name>client</attr_name>
+			<attr_value>%client%</attr_value>
+		</tag_attr>
+		<tag_attr>
+			<attr_name>input</attr_name>
+			<attr_value>%input%</attr_value>
+		</tag_attr> 
+	</tag> -->
+	
+	<tag name = "fee" var="%fee%">
+		<tag_name>param</tag_name>
+		<tag_attr>
+				<attr_name>name</attr_name>
+				<attr_value>input</attr_value>
+		</tag_attr>
+		<tag_attr>
+			<attr_name>value</attr_name>
+			<attr_value>%msisdn%|PROFESSIONAL_NUMBER|%description%|10|%fee%|26|%description%</attr_value>
+		</tag_attr>
+	</tag>
+	
+	
+	<!-- we use to set description information tag 
+	<tag name = "description" var="%description%">
+		<tag_name>description</tag_name>
+		<tag_value>%description%</tag_value>
+		<tag_attr>
+			<attr_name>client</attr_name>
+			<attr_value>%client%</attr_value>
+		</tag_attr>
+		<tag_attr>
+			<attr_name>input</attr_name>
+			<attr_value>%input%</attr_value>
+		</tag_attr>
+	</tag>  -->
+	
+	
+	<tag name = "description" var="%description%">
+		<tag_name>param</tag_name>
+		<tag_value>%description%</tag_value>
+		<tag_attr>
+			<attr_name>name</attr_name>
+			<attr_value>input</attr_value>
+		</tag_attr>
+		<tag_attr>
+			<attr_name>value</attr_name>
+			<attr_value>%msisdn%|PROFESSIONAL_NUMBER|%description%|10|%fee%|26|%description%</attr_value>
+		</tag_attr>
+	</tag>
+
+</charging_api>
