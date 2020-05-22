@@ -5,16 +5,19 @@
  */
 package com.tatsinktech.model.repository;
 
-import com.tatsinktech.model.register.Promotion;
+import com.tatsinktech.model.register.PromotionTable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 /**
  *
- * @author olivier
+ * @author olivier.tatsinkou
  */
 @Repository
-public interface PromotionRepository extends JpaRepository<Promotion, Long> {
+public interface PromotionTableRepository extends JpaRepository<PromotionTable, Long>{
+    
+    @Query("SELECT proTab FROM PromotionTable proTab WHERE proTab.msisdn= :msisdn AND proTab.promotion.promotionName =:promoName")
+    PromotionTable findAllActiveRegisterByMsisdn(String msisdn,String promoName);
 
 }

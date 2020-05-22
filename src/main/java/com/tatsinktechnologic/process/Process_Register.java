@@ -199,34 +199,64 @@ public class Process_Register implements Runnable {
 
                     // step 2
                     if (useproduct == 0) {
-                        if (prod_start_date != null && prod_end_date != null) {
-                            if (prod_start_date.after(prod_end_date)) {
-                                useproduct = 2;               // start time is after end time. wrong time configuration
-                                logger.warn("OFFER :" + product_code + " have START-TIME=" + prod_start_date + " which is after END-TIME =" + prod_end_date);
-                            } else {
+                        if (!isframeVal) {
+                            if (prod_start_date != null && prod_end_date != null) {
+                                if (prod_start_date.after(prod_end_date)) {
+                                    useproduct = 2;               // start time is after end time. wrong time configuration
+                                    logger.warn("OFFER :" + product_code + " have START-TIME=" + prod_start_date + " which is after END-TIME =" + prod_end_date);
+                                } else {
+                                    if (prod_start_date.after(receive_time)) {
+                                        useproduct = 3;            // start time is after receive time customer cannot register to product. product not available.
+                                        logger.warn("OFFER :" + product_code + " have START-TIME=" + prod_start_date + " which is after CURRENT-TIME =" + receive_time);
+                                    }
+                                    if (prod_end_date.before(receive_time)) {
+                                        useproduct = 4;            // end time is before receive time customer cannot register to product. product is expire
+                                        logger.warn("OFFER :" + product_code + " have END-TIME=" + prod_end_date + " which is before CURRENT-TIME =" + receive_time);
+                                    }
+                                }
+                            } else if (prod_start_date != null) {
                                 if (prod_start_date.after(receive_time)) {
                                     useproduct = 3;            // start time is after receive time customer cannot register to product. product not available.
                                     logger.warn("OFFER :" + product_code + " have START-TIME=" + prod_start_date + " which is after CURRENT-TIME =" + receive_time);
                                 }
+                            } else if (prod_end_date != null) {
                                 if (prod_end_date.before(receive_time)) {
                                     useproduct = 4;            // end time is before receive time customer cannot register to product. product is expire
                                     logger.warn("OFFER :" + product_code + " have END-TIME=" + prod_end_date + " which is before CURRENT-TIME =" + receive_time);
+
                                 }
                             }
-                        } else if (prod_start_date != null) {
-                            if (prod_start_date.after(receive_time)) {
-                                useproduct = 3;            // start time is after receive time customer cannot register to product. product not available.
-                                logger.warn("OFFER :" + product_code + " have START-TIME=" + prod_start_date + " which is after CURRENT-TIME =" + receive_time);
+                        }
+                    } else {
+
+                        if (startFrameTime != null && endFrameTime != null) {
+                            if (startFrameTime.after(endFrameTime)) {
+                                useproduct = 2;               // start time is after end time. wrong time configuration
+                                logger.warn("OFFER :" + product_code + " have START-TIME=" + startFrameTime + " which is after END-TIME =" + endFrameTime);
+                            } else {
+                                if (startFrameTime.after(receive_time)) {
+                                    useproduct = 3;            // start time is after receive time customer cannot register to product. product not available.
+                                    logger.warn("OFFER :" + product_code + " have START-TIME=" + startFrameTime + " which is after CURRENT-TIME =" + receive_time);
+                                }
+                                if (endFrameTime.before(receive_time)) {
+                                    useproduct = 4;            // end time is before receive time customer cannot register to product. product is expire
+                                    logger.warn("OFFER :" + product_code + " have END-TIME=" + endFrameTime + " which is before CURRENT-TIME =" + receive_time);
+                                }
                             }
-                        } else if (prod_end_date != null) {
-                            if (prod_end_date.before(receive_time)) {
+                        } else if (startFrameTime != null) {
+                            if (startFrameTime.after(receive_time)) {
+                                useproduct = 3;            // start time is after receive time customer cannot register to product. product not available.
+                                logger.warn("OFFER :" + product_code + " have START-TIME=" + startFrameTime + " which is after CURRENT-TIME =" + receive_time);
+                            }
+                        } else if (endFrameTime != null) {
+                            if (endFrameTime.before(receive_time)) {
                                 useproduct = 4;            // end time is before receive time customer cannot register to product. product is expire
-                                logger.warn("OFFER :" + product_code + " have END-TIME=" + prod_end_date + " which is before CURRENT-TIME =" + receive_time);
+                                logger.warn("OFFER :" + product_code + " have END-TIME=" + endFrameTime + " which is before CURRENT-TIME =" + receive_time);
 
                             }
                         }
                     }
-
+                    
                     // step 3
                     if (useproduct == 0) {
                         if (listRestrictDay != null && !listRestrictDay.isEmpty() && listRestrictDay.contains(dayOfWeek)) {
