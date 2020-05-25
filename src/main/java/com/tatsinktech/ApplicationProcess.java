@@ -39,6 +39,7 @@ import java.util.concurrent.Executors;
 import javax.persistence.EntityManagerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 
@@ -52,81 +53,46 @@ public class ApplicationProcess {
      * @param args the command line arguments
      */
     private static Logger logger = LoggerFactory.getLogger(ApplicationProcess.class);
-
-    private static EntityManagerFactory emf;
-    private static SenderThread_Conf sendthread_conf;
-    private static ReceiverThread_Conf receiverthead_conf;
-    private static ProcessThread_Reg processthead_reg;
-    private static ProcessThread_Del processthead_del;
-    private static ProcessThread_Guide processthead_guide;
-    private static ProcessThread_Check processthead_check;
-    private static Kafka_Conf kafka_conf;
-    private static Application app_conf;
+    
     private static BlockingQueue<Process_Request> send_queue;
     private static BlockingQueue<Process_Request> reg_queue;
     private static BlockingQueue<Process_Request> del_queue;
     private static BlockingQueue<Process_Request> guide_queue;
     private static BlockingQueue<Process_Request> check_queue;
-
-    private static Load_Configuration commonConfig = Load_Configuration.getConfigurationLoader();
+    
+    
+    @Autowired
+    private static Load_Configuration commonConfig;
 
     public static void main(String[] args) {
         // TODO code application logic here
 
         ConfigurableApplicationContext ConfAppContext = SpringApplication.run(ApplicationProcess.class, args);
 
-        List<Runnable> process_runnables = new ArrayList<Runnable>();
+        int send_thread_num = Integer.parseInt(commonConfig.getApplicationSenderNumberThread());
+        int send_thread_pool = Integer.parseInt(commonConfig.getApplicationSenderThreadPool());
+        int send_sleep_duration = Integer.parseInt(commonConfig.getApplicationSenderSleepDuration());
+        int send_maxQueue = Integer.parseInt(commonConfig.getApplicationSenderMaxQueue());
 
-//        // process reg
-//        for (int i = 0; i < 10; i++) {
-//            PrintThread printThread1 = (PrintThread) ConfAppContext.getBean("printThread");
-//            printThread1.setName("Thread " + i);
-//            process_runnables.add(printThread1);
-//        }
-//        ExecutorService process_Execute_reg = Executors.newFixedThreadPool(10);
-//        PrintThread.executeRunnables(process_Execute_reg, process_runnables);
-//
-//        PropertyConfigurator.configure("etc" + File.separator + "log4j.cfg");
-//        logger.info("Load log4j config file done.");
+        int process_reg_num = Integer.parseInt(commonConfig.getApplicationProcessRegNumberThread());
+        int process_reg_pool = Integer.parseInt(commonConfig.getApplicationProcessRegThreadPool());
+        int process_reg_sleep_duration = Integer.parseInt(commonConfig.getApplicationProcessRegSleepDuration());
+        int process_reg_maxQueue = Integer.parseInt(commonConfig.getApplicationProcessRegMaxQueue());
 
-        app_conf = commonConfig.getApp_conf();
+        int process_check_num = Integer.parseInt(commonConfig.getApplicationProcessCheckNumberThread());
+        int process_check_pool = Integer.parseInt(commonConfig.getApplicationProcessCheckThreadPool());
+        int process_check_sleep_duration = Integer.parseInt(commonConfig.getApplicationProcessCheckSleepDuration());
+        int process_check_maxQueue = Integer.parseInt(commonConfig.getApplicationProcessCheckMaxQueue());
 
-        sendthread_conf = app_conf.getSender_thread();
-        receiverthead_conf = app_conf.getReceiver_thread();
-        processthead_reg = app_conf.getProcess_thread_reg();
-        processthead_del = app_conf.getProcess_thread_del();
-        processthead_guide = app_conf.getProcess_thread_guide();
-        processthead_check = app_conf.getProcess_thread_check();
-        kafka_conf = app_conf.getKafka_conf();
+        int process_del_num = Integer.parseInt(commonConfig.getApplicationProcessDelNumberThread());
+        int process_del_pool = Integer.parseInt(commonConfig.getApplicationProcessDelThreadPool());
+        int process_del_sleep_duration = Integer.parseInt(commonConfig.getApplicationProcessDelSleepDuration());
+        int process_del_maxQueue = Integer.parseInt(commonConfig.getApplicationProcessDelMaxQueue());
 
-        int numberRecord = kafka_conf.getNumberRecord();
-        String consum_topic = kafka_conf.getConsumer_topic();
-        String prod_topic = kafka_conf.getProducer_topic();
-
-        int send_thread_num = sendthread_conf.getNumberThread();
-        int send_thread_pool = sendthread_conf.getThreadPool();
-        int send_sleep_duration = sendthread_conf.getSleep_duration();
-        int send_maxQueue = sendthread_conf.getMaxQueue();
-
-        int process_reg_num = processthead_reg.getNumberThread();
-        int process_reg_pool = processthead_reg.getThreadPool();
-        int process_reg_sleep_duration = processthead_reg.getSleep_duration();
-        int process_reg_maxQueue = processthead_reg.getMaxQueue();
-
-        int process_check_num = processthead_check.getNumberThread();
-        int process_check_pool = processthead_check.getThreadPool();
-        int process_check_sleep_duration = processthead_check.getSleep_duration();
-        int process_check_maxQueue = processthead_check.getMaxQueue();
-
-        int process_del_num = processthead_del.getNumberThread();
-        int process_del_pool = processthead_del.getThreadPool();
-        int process_del_sleep_duration = processthead_del.getSleep_duration();
-        int process_del_maxQueue = processthead_del.getMaxQueue();
-
-        int process_guide_num = processthead_guide.getNumberThread();
-        int process_guide_pool = processthead_guide.getThreadPool();
-        int process_guide_sleep_duration = processthead_guide.getSleep_duration();
-        int process_guide_maxQueue = processthead_guide.getMaxQueue();
+        int process_guide_num = Integer.parseInt(commonConfig.getApplicationProcessGuideNumberThread());
+        int process_guide_pool = Integer.parseInt(commonConfig.getApplicationProcessGuideThreadPool());
+        int process_guide_sleep_duration = Integer.parseInt(commonConfig.getApplicationProcessGuideSleepDuration());
+        int process_guide_maxQueue = Integer.parseInt(commonConfig.getApplicationProcessGuideMaxQueue());
 
         send_queue = new ArrayBlockingQueue<>(send_maxQueue);
         reg_queue = new ArrayBlockingQueue<>(process_reg_maxQueue);
@@ -156,7 +122,7 @@ public class ApplicationProcess {
             Process_Register regProcessThread = (Process_Register) ConfAppContext.getBean("RegisterProcessThread");
             process_reg_runnables.add(regProcessThread);
         }
-        Process_Register.loadFeatures(send_sleep_duration, reg_queue);
+        Process_Register.loadFeatures(process_reg_sleep_duration, reg_queue);
         ExecutorService process_Execute_reg = Executors.newFixedThreadPool(process_reg_pool);
         Process_Register.executeRunnables(process_Execute_reg, process_reg_runnables);
 

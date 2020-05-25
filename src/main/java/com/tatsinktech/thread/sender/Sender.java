@@ -30,7 +30,6 @@ public class Sender implements Runnable {
 
     private Logger logger = Logger.getLogger(this.getClass().getName());
 
-    private static Load_Configuration commonConfig = Load_Configuration.getConfigurationLoader();
     private HashMap<String, Notification_Conf> notification;
     private int sleep_duration;
     private Application app_conf;
@@ -38,6 +37,9 @@ public class Sender implements Runnable {
 
     private static BlockingQueue<Process_Request> send_queue;
 
+    @Autowired
+    private Load_Configuration commonConfig;
+     
     @Autowired
     private MyKafkaProducer myKafkaProducer;
 

@@ -5,6 +5,7 @@
  */
 package com.tatsinktech.model.register;
 
+
 import com.tatsinktech.model.AbstractModel;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -30,9 +31,10 @@ import lombok.ToString;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-@Table(name = "promotion",uniqueConstraints={@UniqueConstraint(columnNames = {"msisdn","promotion_id"})})
+@Table(name = "promotable",uniqueConstraints={@UniqueConstraint(columnNames = {"msisdn","promotion_id"})})
 public class PromotionTable extends AbstractModel<Long> {
    
+    
     private String msisdn;
      
     @ManyToOne(fetch = FetchType.EAGER)

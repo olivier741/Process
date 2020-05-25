@@ -11,8 +11,10 @@ import com.tatsinktech.model.register.Command;
 import com.tatsinktech.model.register.Mo_Hist;
 import com.tatsinktech.model.register.Product;
 import com.tatsinktech.model.register.Promotion;
+import com.tatsinktech.model.register.Reduction_Type;
 import com.tatsinktech.model.register.Register;
 import com.tatsinktech.model.repository.RegisterRepository;
+import com.tatsinktech.services.CommunService;
 import com.tatsinktechnologic.dao_repository.AliasJpaController;
 import com.tatsinktechnologic.dao_repository.Mo_HistJpaController;
 import com.tatsinktechnologic.dao_repository.RegisterJpaController;
@@ -62,6 +64,9 @@ public class Process_Register implements Runnable {
 
     @Autowired
     private RegisterRepository registerRepo;
+
+    @Autowired
+    private CommunService communsrv;
 
     public static void addMo_Queue(Process_Request process_req) {
         try {
@@ -256,7 +261,7 @@ public class Process_Register implements Runnable {
                             }
                         }
                     }
-                    
+
                     // step 3
                     if (useproduct == 0) {
                         if (listRestrictDay != null && !listRestrictDay.isEmpty() && listRestrictDay.contains(dayOfWeek)) {
@@ -313,11 +318,29 @@ public class Process_Register implements Runnable {
                             }
 
                             if (useproduct == 0) {
-                                if (!communRepo.authorizationPromo(promo, msisdn.trim())) {
-                                    useproduct = 12;         // customer cannot register to promotion. its phone number not obey to promotion restriction policy 
+                                if (!communsrv.authorizationPromo(msisdn.trim(), promo)) {
+                                    useproduct = 9;         // customer cannot register to promotion. its phone number not obey to promotion restriction policy 
                                 } else {
 
-                                    if (product.getRegFee() > 0 || promo.getPromotion_reg_fee() > 0) {
+                                    if (product.getRegFee() > 0 || promo.getPromotionRegFee() > 0) {
+                                        long charge_val = product.getRegFee();
+                                        long reductPerc = 0;
+                                        long prod_fee = product.getRegFee();
+                                        long reduct_val = 0;
+                                        Reduction_Type reductMode = promo.getReductionMode();
+                                        switch (reductMode) {
+                                            case PERCENTAGE:
+                                                reductPerc = promo.getPercentageReg();
+                                                reduct_val = prod_fee * reductPerc / 100;
+                                                charge_val = Math.abs(prod_fee - reduct_val);
+
+                                                break;
+                                            case VALUE:
+                                                reduct_val = promo.getPromotionRegFee();
+                                                charge_val = Math.abs(prod_fee - reduct_val);
+                                                break;
+                                        }
+                                        
                                         Webservice_Charge web_service = new Webservice_Charge();
                                         try {
                                             WS_Block_Response ws_resp = web_service.requestCharge_Product(msisdn, transaction_id, product);
