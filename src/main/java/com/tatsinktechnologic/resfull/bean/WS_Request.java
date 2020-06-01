@@ -21,7 +21,7 @@ public class WS_Request  implements Serializable{
     private String msisdn;
     private long charge_amount;
     private String charge_reason;
-    private String Reg_transaction_id;
+    private String transaction_id;
     private String ws_block_api_name;
     private List<Param> WSparam = new ArrayList<Param>();
 

@@ -5,24 +5,24 @@
  */
 package com.tatsinktechnologic.process;
 
-import com.tatsinktech.beans.Process_Request;
-import com.tatsinktech.config.Load_Configuration;
-import com.tatsinktech.model.register.Command;
-import com.tatsinktech.model.register.Mo_Hist;
-import com.tatsinktech.model.register.Product;
-import com.tatsinktech.model.register.Promotion;
-import com.tatsinktech.model.register.Reduction_Type;
-import com.tatsinktech.model.register.Register;
-import com.tatsinktech.model.repository.RegisterRepository;
-import com.tatsinktech.services.CommunService;
+import com.tatsinktech.process.beans.Process_Request;
+import com.tatsinktech.process.config.Load_Configuration;
+import com.tatsinktech.process.model.register.Command;
+import com.tatsinktech.process.model.register.Mo_Hist;
+import com.tatsinktech.process.model.register.Product;
+import com.tatsinktech.process.model.register.Promotion;
+import com.tatsinktech.process.model.register.Reduction_Type;
+import com.tatsinktech.process.model.register.Register;
+import com.tatsinktech.process.model.repository.RegisterRepository;
+import com.tatsinktech.process.services.CommunService;
 import com.tatsinktechnologic.dao_repository.AliasJpaController;
 import com.tatsinktechnologic.dao_repository.Mo_HistJpaController;
 import com.tatsinktechnologic.dao_repository.RegisterJpaController;
 import com.tatsinktechnologic.resfull.bean.WS_Block_Response;
 import com.tatsinktechnologic.resfull.client.Webservice_Charge;
-import com.tatsinktech.thread.sender.Sender;
-import com.tatsinktech.util.Generators;
-import com.tatsinktech.util.Utils;
+import com.tatsinktech.process.thread.sender.Sender;
+import com.tatsinktech.process.util.Generators;
+import com.tatsinktech.process.util.Utils;
 import com.tatsinktechnologic.beans_entity.Alias;
 import com.tatsinktechnologic.xml.Application;
 import com.tatsinktechnologic.xml.ProcessThread_Reg;
@@ -42,6 +42,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.oauth2.client.OAuth2RestTemplate;
 
 /**
  *
@@ -67,6 +68,9 @@ public class Process_Register implements Runnable {
 
     @Autowired
     private CommunService communsrv;
+
+    @Autowired
+    private OAuth2RestTemplate oAuth2RestTemplate;
 
     public static void addMo_Queue(Process_Request process_req) {
         try {
@@ -340,7 +344,7 @@ public class Process_Register implements Runnable {
                                                 charge_val = Math.abs(prod_fee - reduct_val);
                                                 break;
                                         }
-                                        
+
                                         Webservice_Charge web_service = new Webservice_Charge();
                                         try {
                                             WS_Block_Response ws_resp = web_service.requestCharge_Product(msisdn, transaction_id, product);

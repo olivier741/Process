@@ -5,7 +5,7 @@
  */
 package com.tatsinktechnologic.process;
 
-import com.tatsinktech.beans.Process_Request;
+import com.tatsinktech.process.beans.Process_Request;
 import com.tatsinktechnologic.beans_entity.Command;
 import com.tatsinktechnologic.beans_entity.Mo_Hist;
 import com.tatsinktechnologic.beans_entity.Product;
@@ -17,8 +17,8 @@ import com.tatsinktechnologic.dao_repository.RegisterJpaController;
 import com.tatsinktechnologic.loadconfig.Load_Configuration;
 import com.tatsinktechnologic.resfull.bean.WS_Response;
 import com.tatsinktechnologic.resfull.client.Webservice_Charge;
-import com.tatsinktech.thread.sender.Sender;
-import com.tatsinktech.util.Utils;
+import com.tatsinktech.process.thread.sender.Sender;
+import com.tatsinktech.process.util.Utils;
 import com.tatsinktechnologic.xml.Application;
 import com.tatsinktechnologic.xml.ProcessThread_Reg;
 import java.net.InetAddress;

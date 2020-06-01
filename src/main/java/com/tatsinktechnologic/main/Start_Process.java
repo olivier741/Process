@@ -15,14 +15,14 @@
  */
 package com.tatsinktechnologic.main;
 
-import com.tatsinktech.beans.Process_Request;
+import com.tatsinktech.process.beans.Process_Request;
 import com.tatsinktechnologic.loadconfig.Load_Configuration;
 import com.tatsinktechnologic.process.Process_Check;
 import com.tatsinktechnologic.process.Process_Delete;
 import com.tatsinktechnologic.process.Process_Guide;
 import com.tatsinktechnologic.process.Process_Register;
 import com.tatsinktechnologic.receiver.Receiver;
-import com.tatsinktech.thread.sender.Sender;
+import com.tatsinktech.process.thread.sender.Sender;
 import com.tatsinktechnologic.xml.Application;
 import com.tatsinktechnologic.xml.Kafka_Conf;
 import com.tatsinktechnologic.xml.ProcessThread_Check;
