@@ -43,6 +43,8 @@ public class WS_Request  implements Serializable{
     private String msisdn;
     private long amount;
     private String charge_reason;
+    private String wsClientlogin;
+    private String wsClientpassword;
     private Date request_time;
     private String ws_AccessMgntName;
     private List<Param> WSparam = new ArrayList<Param>();
