@@ -7,16 +7,15 @@ package com.tatsinktech.process.model.register;
 
 import com.tatsinktech.process.model.AbstractModel;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import java.sql.Timestamp;
+import java.util.Date;
 import javax.persistence.Column;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Index;
 import javax.persistence.Lob;
 import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
@@ -55,9 +54,9 @@ public class Charge_Hist extends AbstractModel<Long> {
     @Column(name = "charge_mode")
     private Charge_Event chargeMode;
 
-    @UpdateTimestamp
-     @Column(name = "charge_time")
-    private Timestamp chargeTime;
+    @Column(name = "charge_time")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date chargeTime;
     
     @Column(name = "charge_fee")
     private long chargeFee;
@@ -75,10 +74,9 @@ public class Charge_Hist extends AbstractModel<Long> {
 
     @Column(name = "charge_error")
     private String chargeError;
-
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "product_id", nullable = true)
-    private Product product;
+    
+    @Column(name = "productCode")
+    private String productCode;
 
     @Column(name = "process_unit")
     private String processUnit;

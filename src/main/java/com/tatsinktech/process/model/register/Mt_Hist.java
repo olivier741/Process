@@ -62,13 +62,20 @@ public class Mt_Hist extends AbstractModel<Long>{
     @Column(name = "send_time")
     private Timestamp sendTime;
     
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "command_id", nullable = true)
-    private Command command;
+     @Column(name = "productCode")
+    private String productCode;
+     
+    @Column(name = "commad_name")
+    private String commandName;
     
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "product_id", nullable = true)
-    private Product product;
+    @Column(name = "commad_code")
+    private String commandCode;
+    
+    @Column(name = "param_name")
+    private String paramName;
+     
+    @Column(name = "service_name")
+    private String serviceName;
    
     @Column(name = "process_unit")
     private String processUnit;

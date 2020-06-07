@@ -42,6 +42,7 @@ public class WS_Request  implements Serializable{
     private String transactionId;
     private String msisdn;
     private long amount;
+    private String productCode;
     private String charge_reason;
     private String wsClientlogin;
     private String wsClientpassword;

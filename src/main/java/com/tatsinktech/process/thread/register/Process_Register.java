@@ -8,6 +8,7 @@ package com.tatsinktech.process.thread.register;
 import com.tatsinktech.process.beans.Process_Request;
 import com.tatsinktech.process.beans.WS_Request;
 import com.tatsinktech.process.beans.WS_Response;
+import com.tatsinktech.process.billing.BillingClient;
 import com.tatsinktech.process.config.Load_Configuration;
 import com.tatsinktech.process.model.register.Command;
 import com.tatsinktech.process.model.register.Mo_Hist;
@@ -71,6 +72,9 @@ public class Process_Register implements Runnable {
 
     @Autowired
     private OAuth2RestTemplate oAuth2RestTemplate;
+
+    @Autowired
+    private BillingClient billClient;
 
     public static void addMo_Queue(Process_Request process_req) {
         try {
@@ -140,6 +144,7 @@ public class Process_Register implements Runnable {
                 String mo_his_desc = "";
 
                 if (!StringUtils.isBlank(product_code)) {
+                    Register oldReg = registerRepo.findAllActiveRegisterByMsisdnByProduct(msisdn, product_code);
                     Product product = SETPRODUCT.get(product_code);
                     charge_fee = product.getRegFee();
                     // get restric offer
@@ -273,6 +278,15 @@ public class Process_Register implements Runnable {
 
                     // step 4
                     if (useproduct == 0) {
+                        if (!product.isIsOverideReg()) {
+                            if (oldReg != null) {
+                                logger.warn("OFFER :" + product_code + " cannot be overring");
+                                useproduct = 6;
+                            }
+                        }
+                    }
+                    // step 5
+                    if (useproduct == 0) {
 
                         Promotion promo = product.getPromotion();
 
@@ -284,7 +298,7 @@ public class Process_Register implements Runnable {
                             if (promo_start_time != null && promo_end_time != null) {
                                 if (promo_start_time.after(promo_end_time)) {
                                     // start time is after end time wrong time configuration     
-                                    useproduct = 6;
+                                    useproduct = 7;
                                     logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " will not be take care");
                                     logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " have PROMO-START-TIME =" + promo_start_time + " which is after PROMO-END-TIME =" + promo_end_time);
 
@@ -293,12 +307,12 @@ public class Process_Register implements Runnable {
                                         // start time is after receive time customer cannot register to promotion. promotion not available.
                                         logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " will not be take care");
                                         logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " have PROMO-START-TIME =" + promo_start_time + " which is after CURRENT-TIME =" + receive_time);
-                                        useproduct = 7;
+                                        useproduct = 8;
                                     }
                                     if (promo_end_time.before(receive_time)) {
                                         logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " will not be take care");
                                         logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " have PROMO-END-TIME =" + promo_end_time + " which is before CURRENT-TIME =" + receive_time);
-                                        useproduct = 8;            // end time is before receive time customer cannot register to promotion. promotion is expire
+                                        useproduct = 9;            // end time is before receive time customer cannot register to promotion. promotion is expire
                                     }
                                 }
                             } else if (promo_start_time != null) {
@@ -306,20 +320,22 @@ public class Process_Register implements Runnable {
                                     // start time is after receive time customer cannot register to promotion. promotion not available.
                                     logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " will not be take care");
                                     logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " have PROMO-START-TIME =" + promo_start_time + " which is after CURRENT-TIME =" + receive_time);
-                                    useproduct = 7;
+                                    useproduct = 8;
                                 }
                             } else if (promo_end_time != null) {
                                 if (promo_end_time.before(receive_time)) {
                                     // end time is before receive time customer cannot register to promotion. promotion is expire
                                     logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " will not be take care");
                                     logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " have PROMO-END-TIME =" + promo_end_time + " which is before CURRENT-TIME =" + receive_time);
-                                    useproduct = 8;
+                                    useproduct = 9;
                                 }
                             }
 
+                            // step 6
                             if (useproduct == 0) {
                                 if (!communsrv.authorizationPromo(msisdn.trim(), promo)) {
-                                    useproduct = 9;         // customer cannot register to promotion. its phone number not obey to promotion restriction policy 
+                                    logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " have RESTRICTION AND " + msisdn + " not obei to that restriction");
+                                    useproduct = 10;         // customer cannot register to promotion. its phone number not obey to promotion restriction policy 
                                 } else {
 
                                     if (product.getRegFee() > 0 || promo.getPromotionRegFee() > 0) {
@@ -348,214 +364,103 @@ public class Process_Register implements Runnable {
                                         wsRequest.setProcessUnit("Process_Reg");
                                         wsRequest.setTransactionId(transaction_id);
                                         wsRequest.setWs_AccessMgntName("accessMgt_ID");
+                                        wsRequest.setProductCode(product_code);
 
-                                        ResponseEntity<WS_Response> response = oAuth2RestTemplate.postForEntity("http://localhost:9090/api_gateway/chargeRequest", wsRequest, WS_Response.class);
-                                        
-                                        System.out.println("response status = " + response.getStatusCode());
-                                        System.out.println("response status value = " + response.getStatusCodeValue());
-                                        System.out.println("response Body = " + response.getBody());
+                                        int resp = billClient.charge(wsRequest);
 
-                                        Webservice_Charge web_service = new Webservice_Charge();
-                                        try {
-                                            WS_Block_Response ws_resp = web_service.requestCharge_Product(msisdn, transaction_id, product);
-
-                                            if (ws_resp != null) {
-                                                charge_fee = ws_resp.getFee_charge();
-                                                api_error = ws_resp.getListws_response().get(0).getAPI_GW_Error();
-                                                api_desc_error = ws_resp.getListws_response().get(0).getAPI_GW_Description();
-                                            } else {
-                                                logger.error("API-GATEWAY Authentication issue ");
-                                            }
-
-                                        } catch (Exception e) {
-                                            useproduct = 16;
-                                            logger.error("API error : ", e);
-                                        }
-                                    }
-
-                                    if (useproduct == 0) {
-                                        if (!api_error.equals("00") && !api_error.equals("")) {
-                                            if (api_error.equals("66")) {  // customer is block
-                                                useproduct = 15;
-                                            } else if (api_error.equals("33")) { // not enough money
-                                                useproduct = 17;
-                                            } else {
-                                                useproduct = 13;
-                                            }
-                                        } else {
-                                            if (expire_time == null) {
-                                                useproduct = 14;
-                                            }
-                                        }
-                                    }
-
-                                }
-                            } else {
-                                if (product.getReg_fee() > 0) {
-                                    Webservice_Charge web_service = new Webservice_Charge();
-                                    try {
-                                        WS_Block_Response ws_resp = web_service.requestCharge_Product(msisdn, transaction_id, product);
-
-                                        if (ws_resp != null) {
-                                            charge_fee = ws_resp.getFee_charge();
-                                            api_error = ws_resp.getListws_response().get(0).getAPI_GW_Error();
-                                            api_desc_error = ws_resp.getListws_response().get(0).getAPI_GW_Description();
-                                        } else {
-                                            logger.error("API-GATEWAY Authentication issue ");
+                                        if (resp == 1) {  // not enough money
+                                            logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " MSISDN = " + msisdn + " don't have enough money");
+                                            useproduct = 11;
                                         }
 
-                                    } catch (Exception e) {
-                                        useproduct = 16;
-                                        logger.error("API error : ", e);
-                                    }
+                                        if (resp == 2) {  // customer is block or inactive or cancel
+                                            logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " MSISDN = " + msisdn + " is inactive or Block or Cancel");
 
-                                }
+                                            useproduct = 12;
+                                        }
 
-                                if (useproduct == 0) {
-                                    if (!api_error.equals("00") && !api_error.equals("")) {
-                                        if (api_error.equals("66")) {  // customer is block
-                                            useproduct = 15;
-                                        } else if (api_error.equals("33")) { // not enough money
-                                            useproduct = 17;
-                                        } else {
+                                        if (resp == -1) {  // webservice error
+                                            logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " MSISDN = " + msisdn + " WEBSERVICE FAIL or NOT PROCESS REQUEST");
                                             useproduct = 13;
                                         }
-                                    } else {
-                                        if (expire_time == null) {
-                                            useproduct = 14;
-                                        }
                                     }
                                 }
-
                             }
                         } else {  // offer don't have promotion
-                            if (product.getReg_fee() > 0) {
-                                Webservice_Charge web_service = new Webservice_Charge();
-                                try {
-                                    WS_Block_Response ws_resp = web_service.requestCharge_Product(msisdn, transaction_id, product);
+                            if (product.getRegFee() > 0) {
+                                long charge_val = product.getRegFee();
 
-                                    if (ws_resp != null) {
-                                        charge_fee = ws_resp.getFee_charge();
-                                        api_error = ws_resp.getListws_response().get(0).getAPI_GW_Error();
-                                        api_desc_error = ws_resp.getListws_response().get(0).getAPI_GW_Description();
-                                    } else {
-                                        logger.error("API-GATEWAY Authentication issue ");
-                                    }
+                                WS_Request wsRequest = new WS_Request();
+                                wsRequest.setAmount(charge_val);
+                                wsRequest.setCharge_reason("charge TOTO Month");
+                                wsRequest.setMsisdn(msisdn);
+                                wsRequest.setProcessUnit("Process_Reg");
+                                wsRequest.setTransactionId(transaction_id);
+                                wsRequest.setWs_AccessMgntName("accessMgt_ID");
+                                wsRequest.setProductCode(product_code);
 
-                                } catch (Exception e) {
-                                    useproduct = 16;
-                                    logger.error("API error : ", e);
+                                int resp = billClient.charge(wsRequest);
+
+                                if (resp == 1) {  // not enough money
+                                    logger.warn("OFFER :" + product_code + " MSISDN = " + msisdn + " don't have enough money");
+                                    useproduct = 11;
                                 }
 
-                            }
+                                if (resp == 2) {  // customer is block or inactive or cancel
+                                    logger.warn("OFFER :" + product_code + " MSISDN = " + msisdn + " is inactive or Block or Cancel");
 
-                            if (useproduct == 0) {
-                                if (!api_error.equals("00") && !api_error.equals("")) {
-                                    if (api_error.equals("66")) {  // customer is block
-                                        useproduct = 15;
-                                    } else if (api_error.equals("33")) { // not enough money
-                                        useproduct = 17;
-                                    } else {
-                                        useproduct = 13;
-                                    }
-                                } else {
-                                    if (expire_time == null) {
-                                        useproduct = 14;
-                                    }
+                                    useproduct = 12;
+                                }
+
+                                if (resp == -1) {  // webservice error
+                                    logger.warn("OFFER :" + product_code + " MSISDN = " + msisdn + " WEBSERVICE FAIL or NOT PROCESS REQUEST");
+                                    useproduct = 13;
                                 }
                             }
-
                         }
 
                     }
 
                     Register reg = null;
-                    RegisterJpaController regCont = null;
 
                     switch (useproduct) {
                         case 0:
-                            reg = communRepo.getRegister(msisdn, product);
-                            boolean isNew = false;
-                            if (reg == null) {
-                                reg = new Register();
-                                reg.setNumber_reg(1);
+                            if (product.isIsOverideReg()) {
+
+                                if (oldReg != null) {   // override old register
+                                    reg = oldReg;
+                                    reg.setNumberReg(oldReg.getNumberReg() + 1);
+                                    reg.setRenewTime(new Date());
+                                    process_mo.setNotificationCode("REG-PRODUCT-SUCCESS-OVERIDE-" + product_code);
+                                    mo_his_desc = "REG-PRODUCT-SUCCESS-OVERIDE-" + product_code;
+                                } else {                // not yet register
+                                    reg = new Register();
+                                    reg.setNumberReg(1);
+                                    reg.setRegTime(new Date());
+                                    process_mo.setNotificationCode("REG-PRODUCT-SUCCESS-" + product_code);
+                                    mo_his_desc = "REG-PRODUCT-SUCCESS-" + product_code;
+                                }
+
+                            } else {
+                                if (oldReg == null) { // not override and don't have old registration
+                                    reg = new Register();
+                                    reg.setNumberReg(1);
+                                    reg.setRegTime(new Date());
+                                    process_mo.setNotificationCode("REG-PRODUCT-SUCCESS-" + product_code);
+                                    mo_his_desc = "REG-PRODUCT-SUCCESS-" + product_code;
+                                }
+                            }
+
+                            if (reg != null) {
+                                reg.setAutoextend(product.isIsExtend());
+                                reg.setExpireTime(expire_time);
+                                reg.setMsisdn(msisdn);
                                 reg.setProduct(product);
-                                reg.setReg_time(receive_time);
-                                isNew = true;
-                            } else {
-
-                                int numberReg = reg.getNumber_reg();
-                                reg.setNumber_reg(numberReg + 1);
-                            }
-                            reg.setAutoextend(isextend);
-                            reg.setExpire_time(expire_time);
-                            reg.setRenew_time(receive_time);
-                            reg.setMsisdn(msisdn);
-                            reg.setStatus(1);
-                            reg.setTransaction_id(transaction_id);
-                            reg.setExchange_mode(exchange_mode);
-
-                            String regDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(receive_time);
-                            String expDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(expire_time);
-
-                            SETVARIABLE.put("_reg_date_", regDate);
-                            SETVARIABLE.put("_exp_date_", expDate);
-
-                            if (validity.toUpperCase().startsWith("D")) {
-                                String value = validity.replace("D", "");
-                                SETVARIABLE.put("_reg_duration_day", value);
-                            } else if (validity.toUpperCase().startsWith("H")) {
-                                String value = validity.replace("H", "");
-                                SETVARIABLE.put("_reg_duration_hour", value);
+                                reg.setStatus(1);
+                                reg.setTransactionId(transaction_id);
                             }
 
-                            SETVARIABLE.put("_reg_fee_", String.valueOf(charge_fee));
-
-                            regCont = new RegisterJpaController(emf);
-
-                            boolean success_reg = false;
-                            if (isNew) {
-                                regCont.create(reg);
-                                process_mo.setNotification_code("REG-PRODUCT-SUCCESS-" + product_code);
-                                mo_his_desc = api_desc_error;
-                                success_reg = true;
-                            } else {
-                                if (isOveride) {
-                                    try {
-                                        regCont.edit(reg);
-                                        process_mo.setNotification_code("REG-PRODUCT-SUCCESS-OVERIDE-" + product_code);
-                                        mo_his_desc = api_desc_error;
-                                        success_reg = true;
-                                    } catch (Exception e) {
-                                        logger.error("Customer don't have account of this Offer. Cannot Edit", e);
-                                    }
-                                } else {
-                                    process_mo.setNotification_code("REG-PRODUCT-NOT-OVERIDE-" + product_code);
-                                    mo_his_desc = "CUSTOMER ALREADY REGISTER TO THIS OFFER: CANNOT OVERIDE";
-                                }
-
-                            }
-
-                            String alias_value = Generators.generateRandomDigit(3);
-
-                            Alias alias = communRepo.getAlias(msisdn);
-
-                            if (success_reg) {
-
-                                if (alias == null) {
-                                    alias = new Alias();
-                                    alias.setAlias(alias_value);
-                                    alias.setMsisdn(msisdn);
-
-                                    AliasJpaController aliasController = new AliasJpaController(emf);
-                                    aliasController.create(alias);
-                                }
-                            }
-
-                            SETVARIABLE.put("_alias_", alias.getAlias());
-                            SETVARIABLE.put("_offer_", reg.getProduct().getProduct_code());
-                            process_mo.setSetvariable(SETVARIABLE);
-                            charge_status = 0;
+                            registerRepo.save(reg);
                             break;
                         case 1:
                             process_mo.setNotification_code("REG-PRODUCT-WRONG-TIME-" + product_code);

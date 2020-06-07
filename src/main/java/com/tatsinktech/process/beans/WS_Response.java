@@ -40,5 +40,6 @@ public class WS_Response implements Serializable{
     private String API_GW_Description;
     private String WS_ResponseContent;
     private String WS_Error;
+    private long duration;
 
 }

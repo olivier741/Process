@@ -20,4 +20,7 @@ public interface RegisterRepository extends JpaRepository<Register, Long> {
 
     @Query("SELECT reg FROM Register reg WHERE reg.status = 1 AND reg.msisdn=: msisdn")
     List<Register> findAllActiveRegisterByMsisdn(String msisdn);
+
+    @Query("SELECT reg FROM Register reg WHERE reg.status = 1 AND reg.msisdn= :msisdn AND reg.product.productCode= :product_code")
+    Register findAllActiveRegisterByMsisdnByProduct(String msisdn, String product_code);
 }

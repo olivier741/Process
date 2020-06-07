@@ -160,13 +160,20 @@ public class MyKafkaConsumer {
                         Sender.addMo_Queue(process_req);
 
                         Command cmd = SETCOMMAND.get(process_req.getCommandName());
+                        String commandCode = null;
+                        String commandName = null;
+                        if (cmd != null) {
+                            commandCode = cmd.getCommandCode();
+                            commandName = cmd.getCommandName();
+                        }
                         Mo_Hist mo_hist = new Mo_Hist();
                         mo_hist.setActionType(process_req.getActionType());
                         mo_hist.setChannel(process_req.getSendChannel());
                         mo_hist.setContent(content);
                         mo_hist.setMsisdn(msisdn);
                         mo_hist.setReceiveTime(receive_time);
-                        mo_hist.setCommand(cmd);
+                        mo_hist.setCommandCode(commandCode);
+                        mo_hist.setCommandName(commandName);
                         mo_hist.setTransactionId(transaction_id);
                         mo_hist.setProcessUnit("Receiver");
                         mo_hist.setIpAddress(address.getHostName() + "@" + address.getHostAddress());
@@ -188,6 +195,14 @@ public class MyKafkaConsumer {
                 Sender.addMo_Queue(process_req);
 
                 Command cmd = SETCOMMAND.get(process_req.getCommandName());
+
+                String commandCode = null;
+                String commandName = null;
+                if (cmd != null) {
+                    commandCode = cmd.getCommandCode();
+                    commandName = cmd.getCommandName();
+                }
+
                 Mo_Hist mo_hist = new Mo_Hist();
                 mo_hist.setActionType(process_req.getActionType());
                 mo_hist.setChannel(process_req.getSendChannel());
@@ -195,7 +210,8 @@ public class MyKafkaConsumer {
                 mo_hist.setMsisdn(msisdn);
                 mo_hist.setReceiveTime(receive_time);
                 mo_hist.setTransactionId(transaction_id);
-                mo_hist.setCommand(cmd);
+                mo_hist.setCommandCode(commandCode);
+                mo_hist.setCommandName(commandName);
                 mo_hist.setProcessUnit("Receiver");
                 mo_hist.setIpAddress(address.getHostName() + "@" + address.getHostAddress());
                 mo_hist.setErroDescription("NOT ACTION TYPE");

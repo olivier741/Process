@@ -92,13 +92,21 @@ public class Mo_Hist extends AbstractModel<Long> {
     
     @Column(name = "erro_description")
     private String exchangeMode;
-
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "product_id", nullable = true)
-    private Product product;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "command_id", nullable = true)
-    private Command command;
+    
+     @Column(name = "productCode")
+    private String productCode;
+     
+    @Column(name = "commad_name")
+    private String commandName;
+    
+    @Column(name = "commad_code")
+    private String commandCode;
+    
+    @Column(name = "param_name")
+    private String paramName;
+    
+    
+    @Column(name = "service_name")
+    private String serviceName;
 
 }

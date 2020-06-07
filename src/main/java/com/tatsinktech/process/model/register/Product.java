@@ -114,15 +114,6 @@ public class Product extends AbstractModel<Long> {
     @OneToMany(mappedBy = "product")
     private Set<Register> listRegister = new HashSet<>();
 
-    @OneToMany(mappedBy = "product")
-    private Set<Charge_Hist> listChargeHist = new HashSet<>();
-
-    @OneToMany(mappedBy = "product")
-    private Set<Mo_Hist> listMoHist = new HashSet<>();
-
-    @OneToMany(mappedBy = "product")
-    private Set<Mt_Hist> listMtHist = new HashSet<>();
-
     public boolean isIsFrameValidity() {
         return isFrameValidity;
     }

@@ -55,13 +55,7 @@ public class Command extends AbstractModel<Long> {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "parameter_id", nullable = true)
     private Parameter parameter;
-    
-    @OneToMany(mappedBy = "command")
-    private Set<Mo_Hist> listMo_Hist = new HashSet<>();
-    
-    @OneToMany(mappedBy = "command")
-    private Set<Mt_Hist> listMt_Hist = new HashSet<>();
-    
+       
     @OneToMany(mappedBy = "command")
     private Set<Notification_Conf> listConfig = new HashSet<>();
 
