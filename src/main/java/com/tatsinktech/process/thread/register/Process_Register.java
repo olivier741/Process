@@ -5,10 +5,10 @@
  */
 package com.tatsinktech.process.thread.register;
 
+import com.tatsinktech.process.beans.Param;
 import com.tatsinktech.process.beans.Process_Request;
 import com.tatsinktech.process.beans.WS_Request;
-import com.tatsinktech.process.beans.WS_Response;
-import com.tatsinktech.process.billing.BillingClient;
+import com.tatsinktech.process.services.BillingClient;
 import com.tatsinktech.process.config.Load_Configuration;
 import com.tatsinktech.process.model.register.Command;
 import com.tatsinktech.process.model.register.Mo_Hist;
@@ -16,21 +16,16 @@ import com.tatsinktech.process.model.register.Product;
 import com.tatsinktech.process.model.register.Promotion;
 import com.tatsinktech.process.model.register.Reduction_Type;
 import com.tatsinktech.process.model.register.Register;
+import com.tatsinktech.process.model.repository.Mo_HistRepository;
 import com.tatsinktech.process.model.repository.RegisterRepository;
 import com.tatsinktech.process.services.CommunService;
-import com.tatsinktechnologic.dao_repository.AliasJpaController;
-import com.tatsinktechnologic.dao_repository.Mo_HistJpaController;
-import com.tatsinktechnologic.dao_repository.RegisterJpaController;
-import com.tatsinktechnologic.resfull.bean.WS_Block_Response;
-import com.tatsinktechnologic.resfull.client.Webservice_Charge;
 import com.tatsinktech.process.thread.sender.Sender;
-import com.tatsinktech.process.util.Generators;
 import com.tatsinktech.process.util.Utils;
-import com.tatsinktechnologic.beans_entity.Alias;
 import java.net.InetAddress;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -43,7 +38,6 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.client.OAuth2RestTemplate;
 
 /**
@@ -65,13 +59,13 @@ public class Process_Register implements Runnable {
     private RegisterRepository registerRepo;
 
     @Autowired
+    private Mo_HistRepository mohisRepo;
+
+    @Autowired
     private CommunService communsrv;
 
     @Autowired
     private static Load_Configuration commonConfig;
-
-    @Autowired
-    private OAuth2RestTemplate oAuth2RestTemplate;
 
     @Autowired
     private BillingClient billClient;
@@ -95,21 +89,6 @@ public class Process_Register implements Runnable {
 
     }
 
-    public Process_Register() {
-        SETVARIABLE = new HashMap<String, String>();
-        SETVARIABLE.put("_reg_date_", null);
-        SETVARIABLE.put("_exp_date_", null);
-        SETVARIABLE.put("_reg_duration_day", null);
-        SETVARIABLE.put("_reg_duration_hour", null);
-        SETVARIABLE.put("_reg_fee_", null);
-        SETVARIABLE.put("_alias_", null);
-        SETVARIABLE.put("_chat_group_", null);
-        SETVARIABLE.put("_offer_", null);
-        SETVARIABLE.put("_list_offer_", null);
-        SETVARIABLE.put("_list_offer_reg_date_", null);
-        SETVARIABLE.put("_list_offer_exp_date_", null);
-    }
-
     @Override
     public void run() {
 
@@ -127,9 +106,6 @@ public class Process_Register implements Runnable {
             } catch (InterruptedException e) {
                 logger.error("Error to Get in reg_queue :" + process_mo, e);
             }
-
-            String api_error = "";
-            String api_desc_error = "";
             int useproduct = -1;
             long charge_fee = 0;
             int charge_status = 0;
@@ -144,7 +120,7 @@ public class Process_Register implements Runnable {
                 String mo_his_desc = "";
 
                 if (!StringUtils.isBlank(product_code)) {
-                    Register oldReg = registerRepo.findAllActiveRegisterByMsisdnByProduct(msisdn, product_code);
+                    Register oldReg = registerRepo.findRegisterByMsisdnAndProduct(msisdn, product_code);
                     Product product = SETPRODUCT.get(product_code);
                     charge_fee = product.getRegFee();
                     // get restric offer
@@ -290,7 +266,7 @@ public class Process_Register implements Runnable {
 
                         Promotion promo = product.getPromotion();
 
-                        if (promo != null) {  // offer have promotion
+                        if (promo != null && communsrv.authorizationPromo(msisdn.trim(), promo)) {  // offer have promotion and allow to get promotion
 
                             Date promo_start_time = promo.getStartTime();
                             Date promo_end_time = promo.getEndTime();
@@ -333,88 +309,100 @@ public class Process_Register implements Runnable {
 
                             // step 6
                             if (useproduct == 0) {
-                                if (!communsrv.authorizationPromo(msisdn.trim(), promo)) {
-                                    logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " have RESTRICTION AND " + msisdn + " not obei to that restriction");
-                                    useproduct = 10;         // customer cannot register to promotion. its phone number not obey to promotion restriction policy 
-                                } else {
 
-                                    if (product.getRegFee() > 0 || promo.getPromotionRegFee() > 0) {
-                                        long charge_val = product.getRegFee();
-                                        long reductPerc = 0;
-                                        long prod_fee = product.getRegFee();
-                                        long reduct_val = 0;
-                                        Reduction_Type reductMode = promo.getReductionMode();
-                                        switch (reductMode) {
-                                            case PERCENTAGE:
-                                                reductPerc = promo.getPercentageReg();
-                                                reduct_val = prod_fee * reductPerc / 100;
-                                                charge_val = Math.abs(prod_fee - reduct_val);
+                                if (product.getRegFee() > 0 || promo.getPromotionRegFee() > 0) {
+                                    charge_fee = product.getRegFee();
+                                    long reductPerc = 0;
+                                    long prod_fee = product.getRegFee();
+                                    long reduct_val = 0;
+                                    Reduction_Type reductMode = promo.getReductionMode();
+                                    switch (reductMode) {
+                                        case PERCENTAGE:
+                                            reductPerc = promo.getPercentageReg();
+                                            reduct_val = prod_fee * reductPerc / 100;
+                                            charge_fee = Math.abs(prod_fee - reduct_val);
 
-                                                break;
-                                            case VALUE:
-                                                reduct_val = promo.getPromotionRegFee();
-                                                charge_val = Math.abs(prod_fee - reduct_val);
-                                                break;
-                                        }
+                                            break;
+                                        case VALUE:
+                                            reduct_val = promo.getPromotionRegFee();
+                                            charge_fee = Math.abs(prod_fee - reduct_val);
+                                            break;
+                                    }
 
-                                        WS_Request wsRequest = new WS_Request();
-                                        wsRequest.setAmount(charge_val);
-                                        wsRequest.setCharge_reason("charge TOTO Month");
-                                        wsRequest.setMsisdn(msisdn);
-                                        wsRequest.setProcessUnit("Process_Reg");
-                                        wsRequest.setTransactionId(transaction_id);
-                                        wsRequest.setWs_AccessMgntName("accessMgt_ID");
-                                        wsRequest.setProductCode(product_code);
+                                    List<Param> listParam = new ArrayList<Param>();
+                                    listParam.add(new Param(commonConfig.getChargingAliasAmount(), String.valueOf(charge_fee)));
+                                    listParam.add(new Param(commonConfig.getChargingAliasMsisdn(), msisdn.trim()));
+                                    listParam.add(new Param(commonConfig.getChargingAliasProduct(), product_code));
+                                    listParam.add(new Param(commonConfig.getChargingAliasTransaction(), transaction_id));
+                                    listParam.add(new Param(commonConfig.getChargingAliasDescription(), "Charge " + product_code + " for " + charge_fee));
 
-                                        int resp = billClient.charge(wsRequest);
+                                    WS_Request wsRequest = new WS_Request();
+                                    wsRequest.setAmount(charge_fee);
+                                    wsRequest.setCharge_reason("Charge " + product_code + " for " + charge_fee);
+                                    wsRequest.setMsisdn(msisdn);
+                                    wsRequest.setProcessUnit("Process_Reg");
+                                    wsRequest.setTransactionId(transaction_id);
+                                    wsRequest.setWs_AccessMgntName(commonConfig.getChargingWsManagement());
+                                    wsRequest.setProductCode(product_code);
+                                    wsRequest.setWSparam(listParam);
 
-                                        if (resp == 1) {  // not enough money
-                                            logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " MSISDN = " + msisdn + " don't have enough money");
-                                            useproduct = 11;
-                                        }
+                                    int resp = billClient.charge(wsRequest);
 
-                                        if (resp == 2) {  // customer is block or inactive or cancel
-                                            logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " MSISDN = " + msisdn + " is inactive or Block or Cancel");
+                                    if (resp == 1) {  // not enough money
+                                        logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " MSISDN = " + msisdn + " don't have enough money");
+                                        useproduct = 10;
+                                    }
 
-                                            useproduct = 12;
-                                        }
+                                    if (resp == 2) {  // customer is block or inactive or cancel
+                                        logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " MSISDN = " + msisdn + " is inactive or Block or Cancel");
 
-                                        if (resp == -1) {  // webservice error
-                                            logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " MSISDN = " + msisdn + " WEBSERVICE FAIL or NOT PROCESS REQUEST");
-                                            useproduct = 13;
-                                        }
+                                        useproduct = 11;
+                                    }
+
+                                    if (resp == -1) {  // webservice error
+                                        logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " MSISDN = " + msisdn + " WEBSERVICE FAIL or NOT PROCESS REQUEST");
+                                        useproduct = 12;
                                     }
                                 }
+
                             }
                         } else {  // offer don't have promotion
                             if (product.getRegFee() > 0) {
-                                long charge_val = product.getRegFee();
+                                charge_fee = product.getRegFee();
+
+                                List<Param> listParam = new ArrayList<Param>();
+                                listParam.add(new Param(commonConfig.getChargingAliasAmount(), String.valueOf(charge_fee)));
+                                listParam.add(new Param(commonConfig.getChargingAliasMsisdn(), msisdn.trim()));
+                                listParam.add(new Param(commonConfig.getChargingAliasProduct(), product_code));
+                                listParam.add(new Param(commonConfig.getChargingAliasTransaction(), transaction_id));
+                                listParam.add(new Param(commonConfig.getChargingAliasDescription(), "Charge " + product_code + " for " + charge_fee));
 
                                 WS_Request wsRequest = new WS_Request();
-                                wsRequest.setAmount(charge_val);
-                                wsRequest.setCharge_reason("charge TOTO Month");
+                                wsRequest.setAmount(charge_fee);
+                                wsRequest.setCharge_reason("Charge " + product_code + " for " + charge_fee);
                                 wsRequest.setMsisdn(msisdn);
                                 wsRequest.setProcessUnit("Process_Reg");
                                 wsRequest.setTransactionId(transaction_id);
-                                wsRequest.setWs_AccessMgntName("accessMgt_ID");
+                                wsRequest.setWs_AccessMgntName(commonConfig.getChargingWsManagement());
                                 wsRequest.setProductCode(product_code);
-
+                                wsRequest.setWSparam(listParam);
+                                
                                 int resp = billClient.charge(wsRequest);
 
                                 if (resp == 1) {  // not enough money
                                     logger.warn("OFFER :" + product_code + " MSISDN = " + msisdn + " don't have enough money");
-                                    useproduct = 11;
+                                    useproduct = 10;
                                 }
 
                                 if (resp == 2) {  // customer is block or inactive or cancel
                                     logger.warn("OFFER :" + product_code + " MSISDN = " + msisdn + " is inactive or Block or Cancel");
 
-                                    useproduct = 12;
+                                    useproduct = 11;
                                 }
 
                                 if (resp == -1) {  // webservice error
                                     logger.warn("OFFER :" + product_code + " MSISDN = " + msisdn + " WEBSERVICE FAIL or NOT PROCESS REQUEST");
-                                    useproduct = 13;
+                                    useproduct = 12;
                                 }
                             }
                         }
@@ -425,7 +413,7 @@ public class Process_Register implements Runnable {
 
                     switch (useproduct) {
                         case 0:
-                            if (product.isIsOverideReg()) {
+                            if (isOveride) {
 
                                 if (oldReg != null) {   // override old register
                                     reg = oldReg;
@@ -459,94 +447,65 @@ public class Process_Register implements Runnable {
                                 reg.setStatus(1);
                                 reg.setTransactionId(transaction_id);
                             }
+                            charge_status = 0;
 
                             registerRepo.save(reg);
                             break;
                         case 1:
-                            process_mo.setNotification_code("REG-PRODUCT-WRONG-TIME-" + product_code);
-                            mo_his_desc = "WRONG TIME CONFIGURATION OF THIS PRODUCT";
+                            process_mo.setNotificationCode("REG-PRODUCT-RESTRICTION-EXIST-" + product_code);
+                            mo_his_desc = "REG-PRODUCT-RESTRICTION-EXIST-" + product_code;
                             charge_status = 1;
                             break;
                         case 2:
-                            process_mo.setNotification_code("REG-PRODUCT-NOT-AVAILABLE-" + product_code);
-                            mo_his_desc = "PRODUCT IS NOT AVAILABLE";
+                        case 3:
+                        case 4:
+                            process_mo.setNotificationCode("REG-PRODUCT-WRONG-TIME-" + product_code);
+                            mo_his_desc = "REG-PRODUCT-WRONG-TIME-" + product_code;
                             charge_status = 2;
                             break;
-                        case 3:
-                            process_mo.setNotification_code("REG-PRODUCT-EXPIRE-" + product_code);
-                            mo_his_desc = "PRODUCT IS EXPIRE";
+                        case 5:
+                            process_mo.setNotificationCode("REG-PRODUCT-INVALID-DAY-" + product_code);
+                            mo_his_desc = "REG-PRODUCT-INVALID-DAY-" + product_code;
                             charge_status = 3;
                             break;
-                        case 4:
-                            process_mo.setNotification_code("REG-PRODUCT-INVALID-DAY-" + product_code);
-                            mo_his_desc = "PRODUCT IS NOT VALID THIS DAY";
+                        case 6:
+                            process_mo.setNotificationCode("REG-PRODUCT-NOT-OVERIDE-" + product_code);
+                            mo_his_desc = "REG-PRODUCT-NOT-OVERIDE-" + product_code;
                             charge_status = 4;
                             break;
-                        case 5:
-                            process_mo.setNotification_code("REG-PRODUCT-WRONG-HOUR-" + product_code);
-                            mo_his_desc = "WRONG HOUR CONFIGURATION OF THIS PRODUCT";
+                        case 7:
+                        case 8:
+                        case 9:
+                            process_mo.setNotificationCode("REG-PRODUCT-PROMO-WRONG-TIME-" + product_code);
+                            mo_his_desc = "REG-PRODUCT-PROMO-WRONG-TIME-" + product_code;
                             charge_status = 5;
                             break;
-                        case 6:
-                            process_mo.setNotification_code("REG-PRODUCT-NOT-AVAILABLE-HOUR-" + product_code);
-                            mo_his_desc = "PRODUCT IS NOT AVAILABLE THIS HOUR";
+                        case 10:
+                            process_mo.setNotificationCode("REG-PRODUCT-NOT-MONEY-" + product_code);
+                            mo_his_desc = "REG-PRODUCT-NOT-MONEY-" + product_code;
                             charge_status = 6;
                             break;
-                        case 7:
-                            process_mo.setNotification_code("REG-PRODUCT-EXPIRE-HOUR-" + product_code);
-                            mo_his_desc = "PRODUCT IS EXPIRE AT THIS HOUR";
+                        case 11:
+                            if (oldReg != null) {
+                                oldReg.setStatus(-1);
+                                oldReg.setCancelTime(new Date());
+                                registerRepo.save(oldReg);
+
+                            }
+                            process_mo.setNotificationCode("REG-PRODUCT-CUSTOMER-BLOCK-" + product_code);
+                            mo_his_desc = "REG-PRODUCT-CUSTOMER-BLOCK-" + product_code;
                             charge_status = 7;
                             break;
-                        case 8:
-                            process_mo.setNotification_code("REG-PRODUCT-RESTRICTION-EXIST-" + product_code);
-                            mo_his_desc = "CUSTOMER HAS REGISTER TO RESTRICT PRODUCT";
+                        case 12:
+                            process_mo.setNotificationCode("REG-PRODUCT-WRONG-API-CONNECTION-" + product_code);
+                            mo_his_desc = "REG-PRODUCT-WRONG-API-CONNECTION-" + product_code;
                             charge_status = 8;
                             break;
-                        case 12:
-                            process_mo.setNotification_code("REG-PRODUCT-PROMO-NOT-ALLOW-" + product_code);
-                            mo_his_desc = "CUSTOMER NOT ALLOW TO GET PROMOTION";
-                            charge_status = 12;
-                            break;
-                        case 13:
-                            process_mo.setNotification_code("REG-PRODUCT-WRONG-CHARGE-" + product_code);
-                            mo_his_desc = "CUSTOMER NOT CHARGE";
-                            charge_status = 13;
-                            break;
-                        case 14:
-                            process_mo.setNotification_code("REG-PRODUCT-WRONG-EXPIRRE_DATE-" + product_code);
-                            mo_his_desc = "SYSTEM ERROR : CANNOT GET EXPIRE TIME OF PROMOTION";
-                            charge_status = 14;
-                            break;
-                        case 15:
-                            reg = communRepo.getRegister(msisdn, product);
-                            if (reg != null) {
-                                reg.setStatus(-1);
-                                reg.setCancel_time(receive_time);
-                                regCont = new RegisterJpaController(emf);
-                                try {
-                                    regCont.edit(reg);
-                                } catch (Exception e) {
-                                    logger.error("Customer don't have account of this Offer. Cannot Edit", e);
-                                }
-                            }
-                            process_mo.setNotification_code("REG-PRODUCT-CUSTOMER-BLOCK-" + product_code);
-                            mo_his_desc = "CUSTOMER IS BLOCK IN NETWORK | " + api_desc_error;
-                            charge_status = 15;
-                            break;
-                        case 16:
-                            process_mo.setNotification_code("REG-PRODUCT-WRONG-API-CONNECTION-" + product_code);
-                            mo_his_desc = "Charging API Connection refused";
-                            charge_status = 16;
-                            break;
-                        case 17:
-                            process_mo.setNotification_code("REG-PRODUCT-NOT-MONEY-" + product_code);
-                            mo_his_desc = "CUSTOMER NOT ENOUGH MONEY";
-                            charge_status = 16;
-                            break;
+
                     }
 
                 } else {
-                    process_mo.setNotification_code("REG-PRODUCT-NOT-EXIST");
+                    process_mo.setNotificationCode("REG-PRODUCT-NOT-EXIST");
                     mo_his_desc = "PRODUCT NOT EXIST";
                     charge_status = -1;
                 }
@@ -557,29 +516,30 @@ public class Process_Register implements Runnable {
                 Timestamp last_time = new Timestamp(System.currentTimeMillis());
                 long diffInMS = (last_time.getTime() - receive_time.getTime());
 
-                Command cmd = SETCOMMAND.get(process_mo.getCommand_code());
                 Mo_Hist mo_hist = new Mo_Hist();
-                mo_hist.setAction_type(process_mo.getAction_type());
-                mo_hist.setChannel(process_mo.getChannel());
+
+                mo_hist.setActionType(process_mo.getActionType());
+                mo_hist.setChannel(process_mo.getSendChannel());
+                mo_hist.setCommandCode(process_mo.getCommanCode());
+                mo_hist.setCommandName(process_mo.getCommandName());
                 mo_hist.setContent(process_mo.getContent());
                 mo_hist.setMsisdn(msisdn);
                 mo_hist.setDuration(diffInMS);
-                mo_hist.setCharge_status(charge_status);
+                mo_hist.setChargeStatus(charge_status);
                 if (useproduct == 0) {
-                    mo_hist.setCharge_fee(charge_fee);
-                    mo_hist.setCharge_error(api_error + "|" + api_desc_error);
-                    mo_hist.setCharge_time(charge_time);
+                    mo_hist.setChargeFee(charge_fee);
+                    mo_hist.setChargeTime(charge_time);
                 }
-                mo_hist.setReceive_time(process_mo.getReceive_time());
-                mo_hist.setCommand(cmd);
-                mo_hist.setTransaction_id(transaction_id);
-                mo_hist.setProcess_unit("Process_Reg");
-                mo_hist.setIP_unit(address.getHostName() + "@" + address.getHostAddress());
-                mo_hist.setError_description(mo_his_desc);
+                mo_hist.setReceiveTime(process_mo.getReceiveTime());
+                mo_hist.setTransactionId(transaction_id);
+                mo_hist.setProcessUnit("Process_Reg");
+                mo_hist.setIpAddress(address.getHostName() + "@" + address.getHostAddress());
+                mo_hist.setDescription(mo_his_desc);
+                mo_hist.setExchangeMode(exchange_mode);
+                mo_hist.setParamName(process_mo.getParamName());
+                mo_hist.setServiceName(process_mo.getServiceName());
 
-                Mo_HistJpaController mo_histController = new Mo_HistJpaController(emf);
-                mo_histController.create(mo_hist);
-                mo_hist.setExchange_mode(exchange_mode);
+                mohisRepo.save(mo_hist);
 
                 logger.info("insert into mo_his");
 
@@ -593,29 +553,6 @@ public class Process_Register implements Runnable {
         }
     }
 
-//    private int getValidity(String validity){
-//        int result = -1;
-//        
-//        if (validity.toUpperCase().startsWith("D")){
-//            String value = validity.replace("D", "");
-//            try {
-//                result = Integer.parseInt(value);
-//            } catch (Exception e) {
-//                result = -1;
-//            }
-//        }else if (validity.toUpperCase().startsWith("H")){
-//            String value = validity.replace("H", "");
-//            try {
-//                result = Integer.parseInt(value);
-//            } catch (Exception e) {
-//                result = -1;
-//            }
-//        }
-//        
-//        
-//        return result;
-//    } 
-//    
     private Timestamp getExpire_Time(String validity, Timestamp current_time) {
         Timestamp result = null;
 
@@ -640,18 +577,6 @@ public class Process_Register implements Runnable {
             } catch (Exception e) {
 
             }
-        }
-        return result;
-    }
-
-    private int getDuration(String validity) {
-        int result = 0;
-        if (validity.toUpperCase().startsWith("D")) {
-            String value = validity.replace("D", "");
-            result = Integer.parseInt(value);
-        } else if (validity.toUpperCase().startsWith("H")) {
-            String value = validity.replace("H", "");
-            result = Integer.parseInt(value);
         }
         return result;
     }

@@ -86,9 +86,6 @@ public class Mo_Hist extends AbstractModel<Long> {
 
     @Column(name = "Ip_address")
     private String IpAddress;
-
-    @Column(name = "erro_description")
-    private String erroDescription;
     
     @Column(name = "erro_description")
     private String exchangeMode;

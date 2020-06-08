@@ -11,14 +11,8 @@ package com.tatsinktech.process.model.register;
  */
 public enum Action_Type {
     REGISTER,
-    DELETE_REG,
-    CHECK_REG,
-    GUIDE_REG,
-    LIST_REG,  
-    ACC_CHANGE_ALIAS,
-    ACC_ADD_CHATGROUP,
-    ACC_DEL_CHATGROUP,
-    ACC_LIST_ALL_CHATGROUP,
-    ACC_LIST_REG_CHATGROUP,
-    ACC_LIST_NOTREG_CHATGROUP
+    DELETE,
+    CHECK,
+    GUIDE,
+    LIST
 }

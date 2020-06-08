@@ -49,7 +49,7 @@ public class Promotion extends AbstractModel<Long> {
     private Promo_Filter promotionFilter;
         
     @Column(name ="msisdn_table",nullable = true)
-    private boolean isTableSelected;
+    private Boolean isTableSelected;
     
     @Column(name ="msisdn_regex",nullable = true)
     private String msisdnRegex;
@@ -67,25 +67,24 @@ public class Promotion extends AbstractModel<Long> {
     private Reduction_Type reductionMode;
 
     @Column(name ="promotion_reg_fee",nullable = true)
-    private long promotionRegFee;
+    private Long promotionRegFee;
     
     @Column(name ="percentage_reg",nullable = true)
-    private long percentageReg;
+    private Long percentageReg;
     
-    @Column(name ="isExtend",nullable = true)
-    private boolean isExtend;
+    @Column(name ="isextend",nullable = true)
+    private Boolean isExtend;
     
     @Column(name ="promotion_ext_fee",nullable = true)
-    private long promotionExtFee;
+    private Long promotionExtFee;
     
     @Column(name ="percentage_ext",nullable = true)
-    private long percentageExt;
-    
-    
+    private Long percentageExt;
+
     @OneToMany(mappedBy = "promotion")
     protected Set<Product> listProduct = new HashSet<>();
     
-     @OneToMany(mappedBy = "promotion")
+    @OneToMany(mappedBy = "promotion")
     protected Set<PromotionTable> listPromTable = new HashSet<>();
 
     public boolean isIsTableSelected() {

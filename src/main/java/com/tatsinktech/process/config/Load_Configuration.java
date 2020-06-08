@@ -13,18 +13,12 @@ import com.tatsinktech.process.model.repository.CommandRepository;
 import com.tatsinktech.process.model.repository.Notification_ConfRepository;
 import com.tatsinktech.process.model.repository.ProductRepository;
 import com.tatsinktech.process.model.repository.Request_ConfRepository;
-import com.tatsinktechnologic.xml.Application;
-import com.tatsinktechnologic.xml.Charging_Api;
-import com.tatsinktechnologic.xml.View_Api;
-import java.io.File;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.simpleframework.xml.Serializer;
-import org.simpleframework.xml.core.Persister;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -127,6 +121,9 @@ public class Load_Configuration implements Serializable {
 
     @Value("${charging.alias.product}")
     private String chargingAliasProduct;
+    
+     @Value("${charging.alias.transaction}")
+    private String chargingAliasTransaction;
 
     @Value("${charging.alias.descripition}")
     private String chargingAliasDescription;
@@ -374,6 +371,14 @@ public class Load_Configuration implements Serializable {
 
     public Request_ConfRepository getRequestConfRepo() {
         return requestConfRepo;
+    }
+
+    public String getChargingAliasTransaction() {
+        return chargingAliasTransaction;
+    }
+
+    public void setChargingAliasTransaction(String chargingAliasTransaction) {
+        this.chargingAliasTransaction = chargingAliasTransaction;
     }
 
   

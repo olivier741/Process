@@ -189,12 +189,6 @@
 
 
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
@@ -258,7 +252,7 @@
                                     <id>Process</id>
                                     <!-- the next line is added by default if you don't have wrapperMainClass's setting -->
                                     <wrapperMainClass>org.tanukisoftware.wrapper.WrapperSimpleApp</wrapperMainClass>
-                                    <mainClass>com.tatsinktechnologic.main.Start_Process</mainClass>
+                                    <mainClass>com.tatsinktech.process.ApplicationProcess</mainClass>
                                     <!-- <commandLineArguments> 
                                             <commandLineArgument>start</commandLineArgument> 
                                     </commandLineArguments> -->

@@ -37,50 +37,50 @@ import org.hibernate.annotations.Synchronize;
 @ToString
 @Subselect(
         "   SELECT cmd.id,  \n"
-        + "        cmd.commandName,  \n"
-        + "        cmd.commandCode,  \n"
-        + "	   cmd.splitSeparator, \n"
-        + "	   ac.actionName,  \n"
-        + "	   ac.actionType,  \n"
-        + "	   prod.productCode, \n"
-        + "	   prod.regFee,  \n"
-        + "	   prod.restrictProduct, \n"
-        + "	   prod.startTime, \n"
-        + "	   prod.endTime,   \n"
-        + "	   prod.restrictConstantValidity,   \n"
-        + "	   prod.isFrameValidity, \n"
-        + "	   prod.frameTimeValidity, \n"
+        + "        cmd.command_name,  \n"
+        + "        cmd.command_code,  \n"
+        + "	   cmd.split_separator, \n"
+        + "	   ac.action_name,  \n"
+        + "	   ac.action_type,  \n"
+        + "	   prod.product_code, \n"
+        + "	   prod.reg_fee,  \n"
+        + "	   prod.restrict_product, \n"
+        + "	   prod.start_time, \n"
+        + "	   prod.end_time,   \n"
+        + "	   prod.restrict_constant_validity,   \n"
+        + "	   prod.isframe_validity, \n"
+        + "	   prod.frame_time_validity, \n"
         + "	   prod.validity, \n"
-        + "	   prod.pendingDuration, \n"
-        + "	   prod.isExtend, \n"
-        + "	   prod.isOverideReg,   \n"
-        + "	   prod.isNotifyExtend, \n"
-        + "	   prod.extendFee, \n"
-        + "        promo.promotionName \n"
-        + "        promo.promotionFilter \n"
-        + "        promo.msisdnTable \n"
-        + "        promo.msisdnRegex \n"
-        + "        promo.startTime promo_startTime \n"
-        + "        promo.endTime promo_endTime \n"
-        + "        promo.reductionMode \n"
-        + "        promo.promotionRegFee \n"
-        + "        promo.percentageReg \n"
-        + "        promo.isExtend promo_isExtend \n"
-        + "        promo.promotionExtFee \n"
-        + "        promo.percentageExt \n"
-        + "	   ser.serviceName, \n"
-        + "        ser.receiveChannel, \n"
-        + "        ser.sendChannel, \n"
-        + "        ser.serviceProvider, \n"
-        + "	   pr.paramName,   \n"
-        + "	   pr.paramLength,    \n"
-        + "	   pr.paramPattern,   \n"
+        + "	   prod.pending_duration, \n"
+        + "	   prod.isextend, \n"
+        + "	   prod.isoveride_reg,   \n"
+        + "	   prod.isnotify_extend, \n"
+        + "	   prod.extend_fee, \n"
+        + "        promo.promotion_name, \n"
+        + "        promo.promotion_filter, \n"
+        + "        promo.msisdn_table, \n"
+        + "        promo.msisdn_regex, \n"
+        + "        promo.start_time promo_startTime, \n"
+        + "        promo.end_time promo_endTime, \n"
+        + "        promo.reduction_mode, \n"
+        + "        promo.promotion_reg_fee, \n"
+        + "        promo.percentage_reg, \n"
+        + "        promo.isextend promo_isExtend, \n"
+        + "        promo.promotion_ext_fee, \n"
+        + "        promo.percentage_ext, \n"
+        + "	   ser.service_name, \n"
+        + "        ser.receive_channel, \n"
+        + "        ser.send_channel, \n"
+        + "        ser.service_provider, \n"
+        + "	   pr.param_name,   \n"
+        + "	   pr.param_length,    \n"
+        + "	   pr.param_pattern   \n"
         + "   FROM command cmd   \n"
         + "   LEFT JOIN parameter pr ON cmd.id = pr.id \n"
         + "   LEFT JOIN action ac ON cmd.id = ac.id \n"
         + "   LEFT JOIN product prod ON ac.product_id = prod.id \n"
         + "   LEFT JOIN promotion promo ON prod.promotion_id = promo.id \n"
-        + "   LEFT JOIN ServiceProvider ser ON prod.id = ser.id ")
+        + "   LEFT JOIN service ser ON prod.id = ser.id ")
 @Synchronize({"Command", "Parameter", "Action", "Product", "Promotion", "ServiceProvider"})
 @Immutable
 public class Request_Conf implements Serializable {
@@ -111,7 +111,7 @@ public class Request_Conf implements Serializable {
     private String productCode;
 
     @Column(name = "reg_fee")
-    private long regFee;
+    private Long regFee;
 
     // list of restric product separate by | (e.g : CAN1|CAN2)
     @Column(name = "restrict_product")
@@ -139,7 +139,7 @@ public class Request_Conf implements Serializable {
        from start_time to end_time and only allow in the frame time by day 
      */
     @Column(name = "isFrame_validity")
-    private boolean isFrameValidity = false;
+    private Boolean isFrameValidity;
 
     //  07:00:00-13:00:00  this validy will allow service from 07AM to 01PM
     @Column(name = "frame_time_validity")
@@ -154,16 +154,16 @@ public class Request_Conf implements Serializable {
     private String pendingDuration;
 
     @Column(name = "isExtend")
-    private boolean isExtend = true;
+    private Boolean isExtend;
 
     @Column(name = "isOveride_reg")
-    private boolean isOverideReg = true;
+    private Boolean isOverideReg;
 
     @Column(name = "isNotify_extend")
-    private boolean isNotifyExtend;
+    private Boolean isNotifyExtend;
 
     @Column(name = "extend_fee")
-    private long extendFee;
+    private Long extendFee;
 
     // ----------------- Promotion -----------------
     @Column(name = "promotion_name")
@@ -192,19 +192,19 @@ public class Request_Conf implements Serializable {
     private Reduction_Type reductionMode;
 
     @Column(name = "promotion_reg_fee")
-    private long promotionRegFee;
+    private Long promotionRegFee;
 
     @Column(name = "percentage_reg")
-    private long percentageReg;
+    private Long percentageReg;
 
     @Column(name = "promo_isExtend")
-    private boolean promo_isExtend;
+    private Boolean promo_isExtend;
 
     @Column(name = "promotion_ext_fee")
-    private long promotionExtFee;
+    private Long promotionExtFee;
 
     @Column(name = "percentage_ext")
-    private long percentageExt;
+    private Long percentageExt;
 
     //-------------------- ServiceProvider ------------------
     @Column(name = "service_name")
@@ -224,9 +224,11 @@ public class Request_Conf implements Serializable {
     private String paramName;
 
     @Column(name = "param_length")
-    private int paramLength;
+    private Integer paramLength;
 
     @Column(name = "param_pattern")
     private String paramPattern;
+    
+    
 
 }

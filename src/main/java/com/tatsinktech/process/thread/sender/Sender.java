@@ -11,7 +11,6 @@ import com.tatsinktech.process.beans.Message_Exchg;
 import com.tatsinktech.process.beans.Process_Request;
 import com.tatsinktech.process.config.Load_Configuration;
 import com.tatsinktech.process.util.ConverterXML_JSON;
-import com.tatsinktechnologic.xml.Application;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +31,6 @@ public class Sender implements Runnable {
 
     private HashMap<String, Notification_Conf> notification;
     private int sleep_duration;
-    private Application app_conf;
     private HashMap<String, String> SETVARIABLE;
 
     private static BlockingQueue<Process_Request> send_queue;

@@ -49,6 +49,7 @@ public class Process_Request {
     private String notificationCode;
     private String language;
     private String exchangeMode;
+    private String serviceName;
     private HashMap<String, String> setvariable;
 
 }

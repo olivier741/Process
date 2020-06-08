@@ -3,12 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.tatsinktechnologic.resfull.bean;
+package com.tatsinktech.process.thread.register;
 
 /**
  *
  * @author olivier.tatsinkou
  */
-public enum Rest_Method {
-    POST,POST_FORM,GET,HEAD,PUT,DELETE,SOAP
+public class Process_List {
+    
 }

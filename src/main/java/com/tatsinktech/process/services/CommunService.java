@@ -19,33 +19,35 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class CommunService {
-    
+
     @Autowired
     private PromotionTableRepository promotabRepo;
 
     public boolean authorizationPromo(String msisdn, Promotion promo) {
         boolean result = false;
-        Promo_Filter promoFilter = promo.getPromotionFilter();
+        if (promo != null) {
+            Promo_Filter promoFilter = promo.getPromotionFilter();
 
-        switch (promoFilter) {
-            case REGEX:
-                Pattern pattern_promo = Pattern.compile(promo.getMsisdnRegex());
-                result = pattern_promo.matcher(msisdn).find();
-                break;
-            case TABLE:
-                PromotionTable promotab = promotabRepo.findAllActiveRegisterByMsisdn(msisdn, promo.getPromotionName());
-                if (promotab!=null){
+            switch (promoFilter) {
+                case REGEX:
+                    Pattern pattern_promo = Pattern.compile(promo.getMsisdnRegex());
+                    result = pattern_promo.matcher(msisdn).find();
+                    break;
+                case TABLE:
+                    PromotionTable promotab = promotabRepo.findAllActiveRegisterByMsisdn(msisdn, promo.getPromotionName());
+                    if (promotab != null) {
+                        result = true;
+                    } else {
+                        result = false;
+                    }
+                    break;
+                case NONE:
                     result = true;
-                }else{
-                    result = false;
-                }
-                break;
-            case NONE:
-                result= true;
-                break;
-            default:
-                result = true;
-                break;
+                    break;
+                default:
+                    result = true;
+                    break;
+            }
         }
 
         return result;

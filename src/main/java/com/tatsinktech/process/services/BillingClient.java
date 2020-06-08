@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.tatsinktech.process.billing;
+package com.tatsinktech.process.services;
 
 /**
  *
@@ -20,12 +20,12 @@ import java.net.InetAddress;
 import java.text.SimpleDateFormat;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.client.OAuth2RestTemplate;
+import org.springframework.stereotype.Service;
 
-@Configuration
+@Service
 public class BillingClient {
 
     @Autowired

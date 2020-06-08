@@ -7,14 +7,10 @@ import com.tatsinktech.process.model.register.Request_Conf;
 import com.tatsinktech.process.model.repository.Mo_HistRepository;
 import com.tatsinktech.process.beans.Message_Exchg;
 import com.tatsinktech.process.beans.Process_Request;
-import com.tatsinktechnologic.dao_repository.Mo_HistJpaController;
-import com.tatsinktechnologic.process.Process_AccountMng;
-import com.tatsinktechnologic.process.Process_Add_ChatGroup;
-import com.tatsinktechnologic.process.Process_ChangeAlias;
-import com.tatsinktechnologic.process.Process_Check;
-import com.tatsinktechnologic.process.Process_Delete;
-import com.tatsinktechnologic.process.Process_Guide;
-import com.tatsinktechnologic.process.Process_Register;
+import com.tatsinktech.process.thread.register.Process_Check;
+import com.tatsinktech.process.thread.register.Process_Delete;
+import com.tatsinktech.process.thread.register.Process_Guide;
+import com.tatsinktech.process.thread.register.Process_Register;
 import com.tatsinktech.process.thread.sender.Sender;
 import com.tatsinktech.process.util.ConverterXML_JSON;
 import java.net.InetAddress;
@@ -65,6 +61,7 @@ public class MyKafkaConsumer {
         String receiver = msg_exch.getReceiver().toUpperCase().trim();
         String msisdn = msg_exch.getSender().toUpperCase().trim();
         String exchange_mode = msg_exch.getExchange_mode().toUpperCase().trim();
+        String service_name = msg_exch.getService_id();
 
         List<Request_Conf> listCommand_conf = getCheck_CommandConf(content);
 
@@ -97,6 +94,7 @@ public class MyKafkaConsumer {
             process_req.setSendChannel(current_cmd_conf.getSendChannel());
             process_req.setSplitSeparate(current_cmd_conf.getSplitSeparator());
             process_req.setTransaction_id(transaction_id);
+            process_req.setServiceName(current_cmd_conf.getServiceName());
 
             String split_sep = "\\s+";
             if (current_cmd_conf.getSplitSeparator() != null) {
@@ -120,38 +118,38 @@ public class MyKafkaConsumer {
                         Process_Register.addMo_Queue(process_req);
                         logger.info("Emitte to Register Process : " + process_req);
                         break;
-                    case CHECK_REG:
+                    case CHECK:
                         Process_Check.addMo_Queue(process_req);
                         logger.info("Emitte to Check Process : " + process_req);
                         break;
-                    case DELETE_REG:
+                    case DELETE:
                         Process_Delete.addMo_Queue(process_req);
                         logger.info("Emitte to Delete Process : " + process_req);
                         break;
-                    case GUIDE_REG:
+                    case GUIDE:
                         Process_Guide.addMo_Queue(process_req);
                         logger.info("Emitte to Guide Process : " + process_req);
                         break;
-                    case LIST_REG:
+                    case LIST:
 //                                Process_ListReg.addMo_Queue(process_req);
                         logger.info("Emitte to List Registration : " + process_req);
                         break;
-                    case ACC_CHANGE_ALIAS:
-                        Process_ChangeAlias.addMo_Queue(process_req);
-                        logger.info("Emitte to Change Alias : " + process_req);
-                        break;
-                    case ACC_ADD_CHATGROUP:
-                        Process_Add_ChatGroup.addMo_Queue(process_req);
-                        logger.info("Emitte to Change Alias : " + process_req);
-                        break;
-                    case ACC_DEL_CHATGROUP:
-
-                    case ACC_LIST_ALL_CHATGROUP:
-                    case ACC_LIST_REG_CHATGROUP:
-                    case ACC_LIST_NOTREG_CHATGROUP:
-                        Process_AccountMng.addMo_Queue(process_req);
-                        logger.info("Emitte to List Registration : " + process_req);
-                        break;
+//                    case ACC_CHANGE_ALIAS:
+//                        Process_ChangeAlias.addMo_Queue(process_req);
+//                        logger.info("Emitte to Change Alias : " + process_req);
+//                        break;
+//                    case ACC_ADD_CHATGROUP:
+//                        Process_Add_ChatGroup.addMo_Queue(process_req);
+//                        logger.info("Emitte to Change Alias : " + process_req);
+//                        break;
+//                    case ACC_DEL_CHATGROUP:
+//
+//                    case ACC_LIST_ALL_CHATGROUP:
+//                    case ACC_LIST_REG_CHATGROUP:
+//                    case ACC_LIST_NOTREG_CHATGROUP:
+//                        Process_AccountMng.addMo_Queue(process_req);
+//                        logger.info("Emitte to List Registration : " + process_req);
+//                        break;
                     default:
                         //action not existe
                         process_req.setNotificationCode("ACTION-NOT-DEFINE");
@@ -177,7 +175,7 @@ public class MyKafkaConsumer {
                         mo_hist.setTransactionId(transaction_id);
                         mo_hist.setProcessUnit("Receiver");
                         mo_hist.setIpAddress(address.getHostName() + "@" + address.getHostAddress());
-                        mo_hist.setErroDescription("ACTION NOT DEFINE");
+                        mo_hist.setDescription("ACTION NOT DEFINE");
                         mo_hist.setExchangeMode(exchange_mode);
 
                         mohistRepo.save(mo_hist);
@@ -214,7 +212,7 @@ public class MyKafkaConsumer {
                 mo_hist.setCommandName(commandName);
                 mo_hist.setProcessUnit("Receiver");
                 mo_hist.setIpAddress(address.getHostName() + "@" + address.getHostAddress());
-                mo_hist.setErroDescription("NOT ACTION TYPE");
+                mo_hist.setDescription("NOT ACTION TYPE");
                 mo_hist.setExchangeMode(exchange_mode);
 
                 mohistRepo.save(mo_hist);
@@ -245,7 +243,7 @@ public class MyKafkaConsumer {
             mo_hist.setTransactionId(transaction_id);
             mo_hist.setProcessUnit("Receiver");
             mo_hist.setIpAddress(address.getHostName() + "@" + address.getHostAddress());
-            mo_hist.setErroDescription("WRONG SYNTAX");
+            mo_hist.setDescription("WRONG SYNTAX");
             mo_hist.setExchangeMode(exchange_mode);
 
             mohistRepo.save(mo_hist);

@@ -65,7 +65,7 @@ public class Product extends AbstractModel<Long> {
     /* This allow to select the thype of validity : Frame or Constant. Frame validity is the validity which go
        from start_time to end_time and only allow in the frame time by day 
      */
-    @Column(name="isFrame_validity",nullable = true)
+    @Column(name="isframe_validity",nullable = true)
     private boolean isFrameValidity = false;
 
     /*  the Day or hour where customer is not allow to get the service.
@@ -88,13 +88,13 @@ public class Product extends AbstractModel<Long> {
     @Column(name="pending_duration",nullable = true)
     private String pendingDuration;
 
-    @Column(name="isExtend",nullable = true)
+    @Column(name="isextend",nullable = true)
     private boolean isExtend = true;
 
-    @Column(name="isOveride_reg",nullable = true)
+    @Column(name="isoveride_reg",nullable = true)
     private boolean isOverideReg = true;
 
-     @Column(name="isNotify_extend",nullable = true)
+     @Column(name="isnotify_extend",nullable = true)
     private boolean isNotifyExtend = true;
 
     @Column(name="extend_fee",nullable = true)
