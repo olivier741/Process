@@ -18,13 +18,16 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.PostConstruct;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  *
  * @author olivier
  */
+@Component
 public class Sender implements Runnable {
 
     private Logger logger = Logger.getLogger(this.getClass().getName());
@@ -51,7 +54,8 @@ public class Sender implements Runnable {
 
     }
 
-    public Sender() {
+   @PostConstruct
+    private void init() {
         this.notification = commonConfig.getSETNOTIFICATION();
     }
 

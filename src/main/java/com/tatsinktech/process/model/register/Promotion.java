@@ -48,7 +48,7 @@ public class Promotion extends AbstractModel<Long> {
     @Column(name ="promotion_filter")
     private Promo_Filter promotionFilter;
         
-    @Column(name ="msisdn_table",nullable = true)
+    @Column(name ="isTableSelected",nullable = true)
     private Boolean isTableSelected;
     
     @Column(name ="msisdn_regex",nullable = true)
@@ -87,23 +87,6 @@ public class Promotion extends AbstractModel<Long> {
     @OneToMany(mappedBy = "promotion")
     protected Set<PromotionTable> listPromTable = new HashSet<>();
 
-    public boolean isIsTableSelected() {
-        return isTableSelected;
-    }
-
-    public void setIsTableSelected(boolean isTableSelected) {
-        this.isTableSelected = isTableSelected;
-    }
-
-   
-     
-     public boolean isIsExtend() {
-        return isExtend;
-    }
-
-    public void setIsExtend(boolean isExtend) {
-        this.isExtend = isExtend;
-    }
 
    
 }

@@ -16,18 +16,26 @@ import com.tatsinktech.process.model.repository.Request_ConfRepository;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.PostConstruct;
+import org.apache.commons.lang.StringUtils;
+import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.annotation.EnableKafka;
+import org.springframework.kafka.core.KafkaAdmin;
 
 /**
  *
  * @author olivier
  */
 @Configuration
+@EnableKafka
 public class Load_Configuration implements Serializable {
 
     private Logger logger = LoggerFactory.getLogger(this.getClass().getName());
@@ -121,8 +129,8 @@ public class Load_Configuration implements Serializable {
 
     @Value("${charging.alias.product}")
     private String chargingAliasProduct;
-    
-     @Value("${charging.alias.transaction}")
+
+    @Value("${charging.alias.transaction}")
     private String chargingAliasTransaction;
 
     @Value("${charging.alias.descripition}")
@@ -155,6 +163,15 @@ public class Load_Configuration implements Serializable {
     @Value("${viewApi.alias.descripition}")
     private String viewApiAliasDescription;
 
+    @Value("${spring.kafka.producer.topic}")
+    private String producer_topic;
+
+    @Value("${spring.kafka.consumer.topic}")
+    private String consumer_topic;
+
+    @Value("${spring.kafka.consumer.bootstrap-servers}")
+    private String brokerAsString;
+
     private HashMap<String, Command> SETCOMMAND = new HashMap<String, Command>();
     private HashMap<String, Notification_Conf> SETNOTIFICATION = new HashMap<String, Notification_Conf>();
     private HashMap<String, Product> SETPRODUCT = new HashMap<String, Product>();
@@ -179,6 +196,10 @@ public class Load_Configuration implements Serializable {
         loadProduct();
         ListRequest_conf = requestConfRepo.findAll();
 
+        logger.info("************** LIST OF POTENTIAL REQUEST **************");
+        for (Request_Conf req : ListRequest_conf) {
+            logger.info(req.toString());
+        }
     }
 
     public String getApplicationSenderNumberThread() {
@@ -381,8 +402,6 @@ public class Load_Configuration implements Serializable {
         this.chargingAliasTransaction = chargingAliasTransaction;
     }
 
-  
-
     private void loadNotificationConf() {
         List<Notification_Conf> listNotif = notifConfRepo.findAll();
         SETNOTIFICATION.clear();
@@ -405,6 +424,23 @@ public class Load_Configuration implements Serializable {
         for (Product prod : listProduct) {
             SETPRODUCT.put(prod.getProductCode(), prod);
         }
+    }
+
+    @Bean
+    public KafkaAdmin admin() {
+        Map<String, Object> configs = new HashMap<>();
+        configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerAsString);
+        return new KafkaAdmin(configs);
+    }
+
+    @Bean
+    public NewTopic topic1() {
+        return new NewTopic(producer_topic, 10, (short) 2);
+    }
+
+    @Bean
+    public NewTopic topic2() {
+        return new NewTopic(consumer_topic, 10, (short) 2);
     }
 
 }

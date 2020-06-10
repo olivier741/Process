@@ -60,12 +60,12 @@ import org.hibernate.annotations.Synchronize;
         + "        promo.promotion_filter, \n"
         + "        promo.msisdn_table, \n"
         + "        promo.msisdn_regex, \n"
-        + "        promo.start_time promo_startTime, \n"
-        + "        promo.end_time promo_endTime, \n"
+        + "        promo.start_time promo_start_time, \n"
+        + "        promo.end_time promo_end_time, \n"
         + "        promo.reduction_mode, \n"
         + "        promo.promotion_reg_fee, \n"
         + "        promo.percentage_reg, \n"
-        + "        promo.isextend promo_isExtend, \n"
+        + "        promo.isextend promo_isextend, \n"
         + "        promo.promotion_ext_fee, \n"
         + "        promo.percentage_ext, \n"
         + "	   ser.service_name, \n"
@@ -77,10 +77,10 @@ import org.hibernate.annotations.Synchronize;
         + "	   pr.param_pattern   \n"
         + "   FROM command cmd   \n"
         + "   LEFT JOIN parameter pr ON cmd.id = pr.id \n"
-        + "   LEFT JOIN action ac ON cmd.id = ac.id \n"
+        + "   LEFT JOIN action ac ON cmd.action_id = ac.id \n"
         + "   LEFT JOIN product prod ON ac.product_id = prod.id \n"
         + "   LEFT JOIN promotion promo ON prod.promotion_id = promo.id \n"
-        + "   LEFT JOIN service ser ON prod.id = ser.id ")
+        + "   LEFT JOIN service ser ON prod.service_id = ser.id ")
 @Synchronize({"Command", "Parameter", "Action", "Product", "Promotion", "ServiceProvider"})
 @Immutable
 public class Request_Conf implements Serializable {
@@ -138,7 +138,7 @@ public class Request_Conf implements Serializable {
     /* This allow to select the thype of validity : Frame or Constant. Frame validity is the validity which go
        from start_time to end_time and only allow in the frame time by day 
      */
-    @Column(name = "isFrame_validity")
+    @Column(name = "isframe_validity")
     private Boolean isFrameValidity;
 
     //  07:00:00-13:00:00  this validy will allow service from 07AM to 01PM
@@ -153,13 +153,13 @@ public class Request_Conf implements Serializable {
     @Column(name = "pending_duration")
     private String pendingDuration;
 
-    @Column(name = "isExtend")
+    @Column(name = "isextend")
     private Boolean isExtend;
 
-    @Column(name = "isOveride_reg")
+    @Column(name = "isoveride_reg")
     private Boolean isOverideReg;
 
-    @Column(name = "isNotify_extend")
+    @Column(name = "isnotify_extend")
     private Boolean isNotifyExtend;
 
     @Column(name = "extend_fee")
@@ -197,7 +197,7 @@ public class Request_Conf implements Serializable {
     @Column(name = "percentage_reg")
     private Long percentageReg;
 
-    @Column(name = "promo_isExtend")
+    @Column(name = "promo_isextend")
     private Boolean promo_isExtend;
 
     @Column(name = "promotion_ext_fee")

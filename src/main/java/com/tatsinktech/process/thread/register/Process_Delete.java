@@ -119,7 +119,7 @@ public class Process_Delete implements Runnable {
                     Date prod_start_date = product.getStartTime();
                     Date prod_end_date = product.getEndTime();
 
-                    boolean isframeVal = product.isIsFrameValidity();
+                    boolean isframeVal = product.getIsFrameValidity();
 
                     useproduct = 0;
 

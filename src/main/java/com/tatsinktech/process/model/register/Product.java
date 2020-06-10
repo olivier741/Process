@@ -46,7 +46,7 @@ public class Product extends AbstractModel<Long> {
     private String productCode;
 
     @Column(name="reg_fee",nullable = true)
-    private long regFee;
+    private Long regFee;
 
     // list of restric product separate by | (e.g : CAN1|CAN2)
     @Column(name="restrict_product",nullable = true)
@@ -66,7 +66,7 @@ public class Product extends AbstractModel<Long> {
        from start_time to end_time and only allow in the frame time by day 
      */
     @Column(name="isframe_validity",nullable = true)
-    private boolean isFrameValidity = false;
+    private Boolean isFrameValidity = false;
 
     /*  the Day or hour where customer is not allow to get the service.
         following the type of constant validity (D or H). we must set information as following : 
@@ -89,16 +89,16 @@ public class Product extends AbstractModel<Long> {
     private String pendingDuration;
 
     @Column(name="isextend",nullable = true)
-    private boolean isExtend = true;
+    private Boolean isExtend = true;
 
     @Column(name="isoveride_reg",nullable = true)
-    private boolean isOverideReg = true;
+    private Boolean isOverideReg = true;
 
      @Column(name="isnotify_extend",nullable = true)
-    private boolean isNotifyExtend = true;
+    private Boolean isNotifyExtend = true;
 
     @Column(name="extend_fee",nullable = true)
-    private long extendFee;
+    private Long extendFee;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "promotion_id", nullable = true)
@@ -113,38 +113,5 @@ public class Product extends AbstractModel<Long> {
 
     @OneToMany(mappedBy = "product")
     private Set<Register> listRegister = new HashSet<>();
-
-    public boolean isIsFrameValidity() {
-        return isFrameValidity;
-    }
-
-    public void setIsFrameValidity(boolean isFrameValidity) {
-        this.isFrameValidity = isFrameValidity;
-    }
-
-    public boolean isIsExtend() {
-        return isExtend;
-    }
-
-    public void setIsExtend(boolean isExtend) {
-        this.isExtend = isExtend;
-    }
-
-    public boolean isIsOverideReg() {
-        return isOverideReg;
-    }
-
-    public void setIsOverideReg(boolean isOverideReg) {
-        this.isOverideReg = isOverideReg;
-    }
-
-    public boolean isIsNotifyExtend() {
-        return isNotifyExtend;
-    }
-
-    public void setIsNotifyExtend(boolean isNotifyExtend) {
-        this.isNotifyExtend = isNotifyExtend;
-    }
-
 
 }

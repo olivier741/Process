@@ -34,16 +34,18 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.regex.Pattern;
+import javax.annotation.PostConstruct;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.oauth2.client.OAuth2RestTemplate;
+import org.springframework.stereotype.Component;
 
 /**
  *
  * @author olivier
  */
+@Component
 public class Process_Register implements Runnable {
 
     private static Logger logger = LoggerFactory.getLogger(Process_Register.class);
@@ -65,10 +67,14 @@ public class Process_Register implements Runnable {
     private CommunService communsrv;
 
     @Autowired
-    private static Load_Configuration commonConfig;
+    private Load_Configuration commonConfig;
 
     @Autowired
     private BillingClient billClient;
+
+    public static void setReg_queue(BlockingQueue<Process_Request> reg_queue) {
+        Process_Register.reg_queue = reg_queue;
+    }
 
     public static void addMo_Queue(Process_Request process_req) {
         try {
@@ -80,8 +86,8 @@ public class Process_Register implements Runnable {
 
     }
 
-    public static void loadFeatures(BlockingQueue<Process_Request> reg_queue) {
-        Process_Register.reg_queue = reg_queue;
+    @PostConstruct
+    private void init() {
         Process_Register.sleep_duration = Integer.parseInt(commonConfig.getApplicationProcessRegSleepDuration());
         Process_Register.SETCOMMAND = commonConfig.getSETCOMMAND();
         Process_Register.SETPRODUCT = commonConfig.getSETPRODUCT();
@@ -154,10 +160,10 @@ public class Process_Register implements Runnable {
                     Date prod_start_date = product.getStartTime();
                     Date prod_end_date = product.getEndTime();
 
-                    boolean isextend = product.isIsExtend();
-                    boolean isOveride = product.isIsOverideReg();
-                    boolean isframeVal = product.isIsFrameValidity();
-                    boolean isNotifyExt = product.isIsNotifyExtend();
+                    boolean isextend = product.getIsExtend();
+                    boolean isOveride = product.getIsOverideReg();
+                    boolean isframeVal = product.getIsFrameValidity();
+                    boolean isNotifyExt = product.getIsNotifyExtend();
 
                     String validity = product.getValidity();
 
@@ -254,7 +260,7 @@ public class Process_Register implements Runnable {
 
                     // step 4
                     if (useproduct == 0) {
-                        if (!product.isIsOverideReg()) {
+                        if (!isOveride) {
                             if (oldReg != null) {
                                 logger.warn("OFFER :" + product_code + " cannot be overring");
                                 useproduct = 6;
@@ -386,7 +392,7 @@ public class Process_Register implements Runnable {
                                 wsRequest.setWs_AccessMgntName(commonConfig.getChargingWsManagement());
                                 wsRequest.setProductCode(product_code);
                                 wsRequest.setWSparam(listParam);
-                                
+
                                 int resp = billClient.charge(wsRequest);
 
                                 if (resp == 1) {  // not enough money
@@ -440,7 +446,7 @@ public class Process_Register implements Runnable {
                             }
 
                             if (reg != null) {
-                                reg.setAutoextend(product.isIsExtend());
+                                reg.setAutoextend(isextend);
                                 reg.setExpireTime(expire_time);
                                 reg.setMsisdn(msisdn);
                                 reg.setProduct(product);
