@@ -46,16 +46,14 @@ public class ApplicationLaucher implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        logger.info("InitializingBean#afterPropertiesSet()");
+        logger.info("******************* InitializingBean *******************************");
 
         int send_thread_num = Integer.parseInt(commonConfig.getApplicationSenderNumberThread());
         int send_thread_pool = Integer.parseInt(commonConfig.getApplicationSenderThreadPool());
-        int send_sleep_duration = Integer.parseInt(commonConfig.getApplicationSenderSleepDuration());
         int send_maxQueue = Integer.parseInt(commonConfig.getApplicationSenderMaxQueue());
 
         int process_reg_num = Integer.parseInt(commonConfig.getApplicationProcessRegNumberThread());
         int process_reg_pool = Integer.parseInt(commonConfig.getApplicationProcessRegThreadPool());
-        int process_reg_sleep_duration = Integer.parseInt(commonConfig.getApplicationProcessRegSleepDuration());
         int process_reg_maxQueue = Integer.parseInt(commonConfig.getApplicationProcessRegMaxQueue());
 
         int process_check_num = Integer.parseInt(commonConfig.getApplicationProcessCheckNumberThread());
@@ -90,11 +88,9 @@ public class ApplicationLaucher implements InitializingBean {
         Sender.setSend_queue(send_queue);
         for (int i = 0; i < send_thread_num; i++) {
             Sender senderThread = (Sender) ConfAppContext.getBean(Sender.class);
-            senderThread.setSleep_duration(send_sleep_duration);
             sender_runnables.add(senderThread);
         }
         ExecutorService send_Execute = Executors.newFixedThreadPool(send_thread_pool);
-
         Sender.executeRunnables(send_Execute, sender_runnables);
 
         // process reg
@@ -106,7 +102,6 @@ public class ApplicationLaucher implements InitializingBean {
             process_reg_runnables.add(regProcessThread);
         }
         ExecutorService process_Execute_reg = Executors.newFixedThreadPool(process_reg_pool);
-
         Process_Register.executeRunnables(process_Execute_reg, process_reg_runnables);
 
 //        // process check

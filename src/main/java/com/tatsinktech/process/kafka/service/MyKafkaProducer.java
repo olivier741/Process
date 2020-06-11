@@ -1,5 +1,7 @@
 package com.tatsinktech.process.kafka.service;
 
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,4 +41,10 @@ public class MyKafkaProducer {
       }
     });
   }
+  
+   private  void sendKafkaMessage(String payload, KafkaProducer<String, String> producer, String topic)
+    {
+        logger.info("Sending Kafka message: " + payload);
+        producer.send(new ProducerRecord<>(topic, payload));
+    }
 }

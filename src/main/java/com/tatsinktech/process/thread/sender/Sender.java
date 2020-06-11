@@ -10,16 +10,23 @@ import com.tatsinktech.process.model.register.Notification_Conf;
 import com.tatsinktech.process.beans.Message_Exchg;
 import com.tatsinktech.process.beans.Process_Request;
 import com.tatsinktech.process.config.Load_Configuration;
+import com.tatsinktech.process.model.register.Mt_Hist;
+import com.tatsinktech.process.model.repository.Mt_HistRepository;
 import com.tatsinktech.process.util.ConverterXML_JSON;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
 import org.apache.commons.lang.StringUtils;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -30,19 +37,23 @@ import org.springframework.stereotype.Component;
 @Component
 public class Sender implements Runnable {
 
-    private Logger logger = Logger.getLogger(this.getClass().getName());
+    Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
     private HashMap<String, Notification_Conf> notification;
     private int sleep_duration;
     private HashMap<String, String> SETVARIABLE;
+    private InetAddress address;
 
     private static BlockingQueue<Process_Request> send_queue;
 
     @Autowired
     private Load_Configuration commonConfig;
-     
+
     @Autowired
     private MyKafkaProducer myKafkaProducer;
+
+    @Autowired
+    private Mt_HistRepository mthistRepo;
 
     public static void addMo_Queue(Process_Request process_req) {
         try {
@@ -54,13 +65,11 @@ public class Sender implements Runnable {
 
     }
 
-   @PostConstruct
+    @PostConstruct
     private void init() {
         this.notification = commonConfig.getSETNOTIFICATION();
-    }
-
-    public void setSleep_duration(int sleep_duration) {
-        this.sleep_duration = sleep_duration;
+        this.sleep_duration = Integer.parseInt(commonConfig.getApplicationSenderSleepDuration());
+        address = gethostName();
     }
 
     public static void setSend_queue(BlockingQueue<Process_Request> send_queue) {
@@ -82,17 +91,19 @@ public class Sender implements Runnable {
                 logger.info("Get message in the sender queue :" + process_mo);
                 logger.info("Sender Queue size :" + send_queue.size());
             } catch (InterruptedException e) {
-                logger.log(Level.SEVERE, "Error to Get in reg_queue :" + process_mo, e);
+                logger.error("Error to Get in reg_queue :" + process_mo, e);
             }
 
             if (process_mo != null) {
+                String transactionid = process_mo.getTransaction_id();
                 String receiver = process_mo.getMsisdn();
                 String sender = process_mo.getSendChannel();
                 String nofif_code = process_mo.getNotificationCode();
+                String message = nofif_code;
                 SETVARIABLE = process_mo.getSetvariable();
                 if (!StringUtils.isBlank(nofif_code)) {
                     Notification_Conf notif_conf = notification.get(nofif_code);
-                    String message = "";
+                    JSONObject jsonObject = new JSONObject();
 
                     if (notif_conf != null) {
                         message = notif_conf.getNotificationValue();
@@ -103,20 +114,64 @@ public class Sender implements Runnable {
                             }
                         }
 
-                        Message_Exchg msg_exch = new Message_Exchg(null, null, null, sender, receiver, message, null);
-                        String message_send = ConverterXML_JSON.convertMsgExchToJson(msg_exch);
-                        myKafkaProducer.sendDataToKafka(message_send);
-                        logger.info("Msisdn :" + receiver + " --> Channel : " + sender + " --> Notification Code : " + nofif_code + " --> Message :  " + message);
-                    } else {
-                        logger.log(Level.WARNING, "Msisdn :" + receiver + " --> Channel : " + sender + " --> Notification Code : " + nofif_code + " --> Message Not provide in DB");
-                    }
+                        try {
+                            jsonObject.put("transaction_id", transactionid);
+                            jsonObject.put("service_id", process_mo.getServiceName());
+                            jsonObject.put("message_id", "message_1");
+                            jsonObject.put("sender", sender);
+                            jsonObject.put("receiver", receiver);
+                            jsonObject.put("content", message);
+                            jsonObject.put("exchange_mode", "SENDER");
 
+                            
+
+                        } catch (JSONException e) {
+                            logger.error(e.getMessage());
+                        }
+                        logger.info("Msisdn :" + receiver + " --> Channel : " + sender + " --> Notification Code : " + nofif_code + " --> Message :  " + message);
+
+                        myKafkaProducer.sendDataToKafka(jsonObject.toString());
+
+                    } else {
+                         try {
+                            jsonObject.put("transaction_id", transactionid);
+                            jsonObject.put("service_id", process_mo.getServiceName());
+                            jsonObject.put("message_id", "message_1");
+                            jsonObject.put("sender", sender);
+                            jsonObject.put("receiver", receiver);
+                            jsonObject.put("content", message);
+                            jsonObject.put("exchange_mode", "SENDER");
+
+                        } catch (JSONException e) {
+                            logger.error(e.getMessage());
+                        }
+
+                        logger.warn("Msisdn :" + receiver + " --> Channel : " + sender + " --> Notification Code : " + nofif_code + " --> Message Not provide in DB");
+                    }
+                    myKafkaProducer.sendDataToKafka(jsonObject.toString());
                 } else {
-                    logger.log(Level.WARNING, "Msisdn :" + receiver + " --> Channel : " + sender + " --> Not Notification Code  Provided ");
+                    logger.warn("Msisdn :" + receiver + " --> Channel : " + sender + " --> Not Notification Code  Provided ");
                 }
+                Timestamp sendTime = new Timestamp(System.currentTimeMillis());
+                Mt_Hist mtHist = new Mt_Hist();
+                mtHist.setChannel(sender);
+                mtHist.setCommandCode(process_mo.getCommanCode());
+                mtHist.setCommandName(process_mo.getCommandName());
+                mtHist.setDescription(process_mo.getNotificationCode());
+                mtHist.setIpAddress(address.getHostName() + "@" + address.getHostAddress());
+                mtHist.setMessage(message);
+                mtHist.setParamName(process_mo.getParamName());
+                mtHist.setProcessUnit("Sender");
+                mtHist.setProductCode(process_mo.getProductCode());
+                mtHist.setReceiveTime(process_mo.getReceiveTime());
+                mtHist.setSendTime(sendTime);
+                mtHist.setServiceName(process_mo.getServiceName());
+                mtHist.setTransactionId(process_mo.getTransaction_id());
+
+                mthistRepo.save(mtHist);
 
             } else {
-                logger.log(Level.WARNING, "Process Request is NULL ");
+                logger.warn("Process Request is NULL ");
             }
 
             try {
@@ -126,6 +181,18 @@ public class Sender implements Runnable {
 
         }
 
+    }
+
+    private InetAddress gethostName() {
+
+        InetAddress addr = null;
+
+        try {
+            addr = InetAddress.getLocalHost();
+        } catch (UnknownHostException ex) {
+            logger.error("Hostname can not be resolved", ex);
+        }
+        return addr;
     }
 
     public static void executeRunnables(final ExecutorService service, List<Runnable> runnables) {

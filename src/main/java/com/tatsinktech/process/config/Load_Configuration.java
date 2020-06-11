@@ -16,26 +16,20 @@ import com.tatsinktech.process.model.repository.Request_ConfRepository;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Properties;
 import javax.annotation.PostConstruct;
-import org.apache.commons.lang.StringUtils;
-import org.apache.kafka.clients.admin.AdminClientConfig;
-import org.apache.kafka.clients.admin.NewTopic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.kafka.annotation.EnableKafka;
-import org.springframework.kafka.core.KafkaAdmin;
+import org.springframework.stereotype.Component;
+
 
 /**
  *
  * @author olivier
  */
-@Configuration
-@EnableKafka
+@Component
 public class Load_Configuration implements Serializable {
 
     private Logger logger = LoggerFactory.getLogger(this.getClass().getName());
@@ -169,8 +163,20 @@ public class Load_Configuration implements Serializable {
     @Value("${spring.kafka.consumer.topic}")
     private String consumer_topic;
 
-    @Value("${spring.kafka.consumer.bootstrap-servers}")
-    private String brokerAsString;
+    @Value("${spring.kafka.zookeeper.host}")
+    private String zookeeperHosts;
+
+    @Value("${spring.kafka.topic.partitions}")
+    private String partitions;
+
+    @Value("${spring.kafka.topic.replication}")
+    private String replicationFactor;
+
+    @Value("${spring.kafka.topic.session-timeOut-in-ms}")
+    private String sessionTimeOutInMs;
+
+    @Value("${spring.kafka.topic.connection-timeOut-in-ms}")
+    private String connectionTimeOutInMs;
 
     private HashMap<String, Command> SETCOMMAND = new HashMap<String, Command>();
     private HashMap<String, Notification_Conf> SETNOTIFICATION = new HashMap<String, Notification_Conf>();
@@ -195,6 +201,8 @@ public class Load_Configuration implements Serializable {
         loadCommand();
         loadProduct();
         ListRequest_conf = requestConfRepo.findAll();
+//        createTopicIfNotExists(consumer_topic);
+//        createTopicIfNotExists(producer_topic);
 
         logger.info("************** LIST OF POTENTIAL REQUEST **************");
         for (Request_Conf req : ListRequest_conf) {
@@ -426,21 +434,35 @@ public class Load_Configuration implements Serializable {
         }
     }
 
-    @Bean
-    public KafkaAdmin admin() {
-        Map<String, Object> configs = new HashMap<>();
-        configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerAsString);
-        return new KafkaAdmin(configs);
-    }
-
-    @Bean
-    public NewTopic topic1() {
-        return new NewTopic(producer_topic, 10, (short) 2);
-    }
-
-    @Bean
-    public NewTopic topic2() {
-        return new NewTopic(consumer_topic, 10, (short) 2);
-    }
+//    private  void createTopicIfNotExists(String topicName) {
+//        ZkClient zkClient = null;
+//        ZkUtils zkUtils = null;
+//
+//        int partition = Integer.parseInt(partitions);
+//        int replication = Integer.parseInt(replicationFactor);
+//        int sessionTimeOut = Integer.parseInt(sessionTimeOutInMs);
+//        int connectionTimeOut = Integer.parseInt(connectionTimeOutInMs);
+//
+//        try {
+//            zkClient = new ZkClient(zookeeperHosts, sessionTimeOut, connectionTimeOut, ZKStringSerializer$.MODULE$);
+//            zkUtils = new ZkUtils(zkClient, new ZkConnection(zookeeperHosts), false);
+//
+//            Properties topicConfiguration = new Properties();
+//
+//            if (!AdminUtils.topicExists(zkUtils, topicName)) {
+//                AdminUtils.createTopic(zkUtils, topicName, partition, replication, topicConfiguration, RackAwareMode.Enforced$.MODULE$);
+//                logger.info("############# Topic " + topicName + " created ##############");
+//            } else {
+//                logger.info("############ Topic " + topicName + " already exists #################");
+//            }
+//
+//        } catch (Exception ex) {
+//            logger.error("cannot create topic : " + topicName, ex);
+//        } finally {
+//            if (zkClient != null) {
+//                zkClient.close();
+//            }
+//        }
+//    }
 
 }
