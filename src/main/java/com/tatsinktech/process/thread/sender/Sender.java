@@ -130,7 +130,7 @@ public class Sender implements Runnable {
                         }
                         logger.info("Msisdn :" + receiver + " --> Channel : " + sender + " --> Notification Code : " + nofif_code + " --> Message :  " + message);
 
-                        myKafkaProducer.sendDataToKafka(jsonObject.toString());
+                        myKafkaProducer.sendMessage(jsonObject.toString());
 
                     } else {
                          try {
@@ -148,7 +148,7 @@ public class Sender implements Runnable {
 
                         logger.warn("Msisdn :" + receiver + " --> Channel : " + sender + " --> Notification Code : " + nofif_code + " --> Message Not provide in DB");
                     }
-                    myKafkaProducer.sendDataToKafka(jsonObject.toString());
+                    myKafkaProducer.sendMessage(jsonObject.toString());
                 } else {
                     logger.warn("Msisdn :" + receiver + " --> Channel : " + sender + " --> Not Notification Code  Provided ");
                 }

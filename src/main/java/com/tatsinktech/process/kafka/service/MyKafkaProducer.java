@@ -23,8 +23,8 @@ public class MyKafkaProducer {
 
   @Autowired
   KafkaTemplate<String, String> kafkaTemplate;
-
-  public void sendDataToKafka(@RequestParam String data) {
+  
+  public void sendDataToKafka(String data) {
 
     ListenableFuture<SendResult<String, String>> listenableFuture = kafkaTemplate.send(topic, data);
 
@@ -32,7 +32,7 @@ public class MyKafkaProducer {
 
       @Override
       public void onSuccess(SendResult<String, String> result) {
-        logger.info(String.format("Sent data     = %s", result.getProducerRecord().value()));
+        logger.info(String.format("Topic -->"+topic+" *** Message --> %s", result.getProducerRecord().value()));
       }
 
       @Override
@@ -42,9 +42,31 @@ public class MyKafkaProducer {
     });
   }
   
-   private  void sendKafkaMessage(String payload, KafkaProducer<String, String> producer, String topic)
-    {
-        logger.info("Sending Kafka message: " + payload);
-        producer.send(new ProducerRecord<>(topic, payload));
-    }
+  
+   public void sendMessage(String message) {
+       
+            ListenableFuture<SendResult<String, String>> future = kafkaTemplate.send(topic, message);
+            
+            future.addCallback(new ListenableFutureCallback<SendResult<String, String>>() {
+                @Override
+                public void onSuccess(SendResult<String, String> result) {
+                    System.out.println("Sent message=[" + message + "] with offset=[" + result.getRecordMetadata().offset() + "]");
+                }
+
+                @Override
+                public void onFailure(Throwable ex) {
+                    System.out.println("Unable to send message=[" + message + "] due to : " + ex.getMessage());
+                }
+            });
+        }
+   
+        public void sendMessageToPartion(String message, int partition) {
+            kafkaTemplate.send(topic, partition, null, message);
+        }
+
+
+
+
+    
+
 }

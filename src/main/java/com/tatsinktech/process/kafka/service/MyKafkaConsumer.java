@@ -72,7 +72,7 @@ public class MyKafkaConsumer {
     public void listenPartition0(ConsumerRecord<?, ?> record) {
         logger.info("Listener Id0, Thread ID: " + Thread.currentThread().getId());
         String word = String.valueOf(record.value());
-        processReceive(word);
+        processReceive(word, "listenPartition0");
         countDownLatch0.countDown();
     }
 
@@ -80,7 +80,31 @@ public class MyKafkaConsumer {
     public void listenPartition1(ConsumerRecord<?, ?> record) {
         logger.info("Listener Id2, Thread ID: " + Thread.currentThread().getId());
         String word = String.valueOf(record.value());
-        processReceive(word);
+        processReceive(word, "listenPartition2");
+        countDownLatch0.countDown();
+    }
+
+    @KafkaListener(topics = "${spring.kafka.consumer.topic}")
+    public void listenPartition2(ConsumerRecord<?, ?> record) {
+        logger.info("Listener Id2, Thread ID: " + Thread.currentThread().getId());
+        String word = String.valueOf(record.value());
+        processReceive(word, "listenPartition3");
+        countDownLatch0.countDown();
+    }
+
+    @KafkaListener(topics = "${spring.kafka.consumer.topic}")
+    public void listenPartition3(ConsumerRecord<?, ?> record) {
+        logger.info("Listener Id2, Thread ID: " + Thread.currentThread().getId());
+        String word = String.valueOf(record.value());
+        processReceive(word, "listenPartition4");
+        countDownLatch0.countDown();
+    }
+
+    @KafkaListener(topics = "${spring.kafka.consumer.topic}")
+    public void listenPartition4(ConsumerRecord<?, ?> record) {
+        logger.info("Listener Id2, Thread ID: " + Thread.currentThread().getId());
+        String word = String.valueOf(record.value());
+        processReceive(word, "listenPartition5");
         countDownLatch0.countDown();
     }
 
@@ -118,7 +142,7 @@ public class MyKafkaConsumer {
 //        processReceive(word);
 //        countDownLatch3.countDown();
 //    }
-    private void processReceive(String word) {
+    private void processReceive(String word, String listenPartition) {
         JSONObject receivedJsonObject = null;
         try {
             receivedJsonObject = new JSONObject(word);
@@ -127,7 +151,7 @@ public class MyKafkaConsumer {
                     To make sure we successfully deserialized the message to a JSON object, we'll
                     log the index of JSON object.
              */
-            logger.info("request recieve : \n" + receivedJsonObject.toString());
+            logger.info(listenPartition + " -- request recieve : \n" + receivedJsonObject.toString());
 
             Timestamp receive_time = new Timestamp(System.currentTimeMillis());
 
@@ -138,37 +162,41 @@ public class MyKafkaConsumer {
             String exchange_mode = receivedJsonObject.getString("exchange_mode");
             String service_name = receivedJsonObject.getString("service_id");
 
+            Process_Request process_req = new Process_Request();
+
+            process_req.setContent(content);
+            process_req.setExchangeMode(exchange_mode);
+            process_req.setLanguage("");
+            process_req.setMsisdn(msisdn);
+            process_req.setNotificationCode("");
+            process_req.setReceiveTime(receive_time);
+            process_req.setReceiver(receiver);
+            process_req.setTransaction_id(transaction_id);
+            process_req.setRcvChannel(receiver);
+            process_req.setSendChannel(receiver);
+
             List<Request_Conf> listCommand_conf = getCheck_CommandConf(content);
 
-            logger.info("transaction_id   : " + transaction_id);
-            logger.info("content send by customer   : " + content);
-            logger.info("customer phone number      : " + msisdn);
-            logger.info("short code                 : " + receiver);
+            logger.info(listenPartition + "-- transaction_id   : " + transaction_id);
+            logger.info(listenPartition + " -- content send by customer   : " + content);
+            logger.info(listenPartition + " -- customer phone number      : " + msisdn);
+            logger.info(listenPartition + " -- short code                 : " + receiver);
 
             if (listCommand_conf.size() > 0) {
                 // good syntax send by customer
                 Request_Conf current_cmd_conf = listCommand_conf.get(0);
-                Process_Request process_req = new Process_Request();
 
                 process_req.setActionName(current_cmd_conf.getActionName());
                 process_req.setActionType(current_cmd_conf.getActionType());
                 process_req.setCommanCode(current_cmd_conf.getCommandCode());
                 process_req.setCommandName(current_cmd_conf.getCommandName());
-                process_req.setContent(content);
-                process_req.setExchangeMode(exchange_mode);
-                process_req.setLanguage("");
-                process_req.setMsisdn(msisdn);
-                process_req.setNotificationCode("");
                 process_req.setParamLength(current_cmd_conf.getParamLength());
                 process_req.setParamName(current_cmd_conf.getParamName());
                 process_req.setParamPattern(current_cmd_conf.getParamPattern());
                 process_req.setProductCode(current_cmd_conf.getProductCode());
                 process_req.setRcvChannel(current_cmd_conf.getReceiveChannel());
-                process_req.setReceiveTime(receive_time);
-                process_req.setReceiver(receiver);
                 process_req.setSendChannel(current_cmd_conf.getSendChannel());
                 process_req.setSplitSeparate(current_cmd_conf.getSplitSeparator());
-                process_req.setTransaction_id(transaction_id);
                 process_req.setServiceName(current_cmd_conf.getServiceName());
 
                 String split_sep = "\\s+";
@@ -191,23 +219,23 @@ public class MyKafkaConsumer {
                     switch (action_type) {
                         case REGISTER:
                             Process_Register.addMo_Queue(process_req);
-                            logger.info("Emitte to Register Process : " + process_req);
+                            logger.info(listenPartition + " -- Emitte to Register Process : " + process_req);
                             break;
                         case CHECK:
                             Process_Check.addMo_Queue(process_req);
-                            logger.info("Emitte to Check Process : " + process_req);
+                            logger.info(listenPartition + " -- Emitte to Check Process : " + process_req);
                             break;
                         case DELETE:
                             Process_Delete.addMo_Queue(process_req);
-                            logger.info("Emitte to Delete Process : " + process_req);
+                            logger.info(listenPartition + " -- Emitte to Delete Process : " + process_req);
                             break;
                         case GUIDE:
                             Process_Guide.addMo_Queue(process_req);
-                            logger.info("Emitte to Guide Process : " + process_req);
+                            logger.info(listenPartition + " -- Emitte to Guide Process : " + process_req);
                             break;
                         case LIST:
 //                                Process_ListReg.addMo_Queue(process_req);
-                            logger.info("Emitte to List Registration : " + process_req);
+                            logger.info(listenPartition + " -- Emitte to List Registration : " + process_req);
                             break;
 //                    case ACC_CHANGE_ALIAS:
 //                        Process_ChangeAlias.addMo_Queue(process_req);
@@ -255,7 +283,7 @@ public class MyKafkaConsumer {
 
                             mohistRepo.save(mo_hist);
 
-                            logger.info("insert into mo_his ");
+                            logger.info(listenPartition + " -- insert into mo_his ");
 
                             break;
 
@@ -292,17 +320,11 @@ public class MyKafkaConsumer {
 
                     mohistRepo.save(mo_hist);
 
-                    logger.info("insert into mo_his ");
+                    logger.info(listenPartition + " -- insert into mo_his ");
                 }
 
             } else {
                 // wrong syntax send by customer
-                Process_Request process_req = new Process_Request();
-                process_req.setTransaction_id(transaction_id);
-                process_req.setReceiver(receiver);
-                process_req.setMsisdn(msisdn);
-                process_req.setReceiveTime(receive_time);
-                process_req.setContent(content);
                 process_req.setNotificationCode("RECEIVER-WRONG-SYNTAX");
 
                 // send to sender
@@ -323,7 +345,7 @@ public class MyKafkaConsumer {
 
                 mohistRepo.save(mo_hist);
 
-                logger.info("insert into mo_his ");
+                logger.info(listenPartition + " -- insert into mo_his ");
 
             }
         } catch (JSONException e) {
