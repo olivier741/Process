@@ -108,31 +108,6 @@ public class MyKafkaConsumer {
         countDownLatch0.countDown();
     }
 
-//     @KafkaListener( topicPartitions = {
-//        @TopicPartition(topic = "${spring.kafka.consumer.topic}", partitions = {"0"})})
-//    public void listenPartition0(ConsumerRecord<?, ?> record) {
-//        logger.info("Listener Id0, Thread ID: " + Thread.currentThread().getId());
-//        String word = String.valueOf(record.value());
-//        processReceive(word);
-//        countDownLatch0.countDown();
-//    }
-//    @KafkaListener( topicPartitions = {
-//        @TopicPartition(topic = "${spring.kafka.consumer.topic}", partitions = {"1"})})
-//    public void listenPartition1(ConsumerRecord<?, ?> record) {
-//        logger.info("Listener Id1, Thread ID: " + Thread.currentThread().getId());
-//        String word = String.valueOf(record.value());
-//        processReceive(word);
-//        countDownLatch1.countDown();
-//    }
-//
-//    @KafkaListener( topicPartitions = {
-//        @TopicPartition(topic = "${spring.kafka.consumer.topic}", partitions = {"2"})})
-//    public void listenPartition2(ConsumerRecord<?, ?> record) {
-//        logger.info("Listener Id2, Thread ID: " + Thread.currentThread().getId());
-//        String word = String.valueOf(record.value());
-//        processReceive(word);
-//        countDownLatch2.countDown();
-//    }
 //
 //    @KafkaListener( topicPartitions = {
 //        @TopicPartition(topic = "${spring.kafka.consumer.topic}", partitions = {"3"})})
