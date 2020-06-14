@@ -16,6 +16,7 @@ import com.tatsinktech.process.util.ConverterXML_JSON;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,25 +81,44 @@ public class Sender implements Runnable {
     public void run() {
 
         logger.info("################################## START SENDER ###########################");
-
+        List<String> listLebelNotif = Arrays.asList("REG-PRODUCT-NOT-EXIST",
+                "CHECK-PRODUCT-NOT-EXIST",
+                "DEL-PRODUCT-NOT-EXIST",
+                "GUIDE-PRODUCT-NOT-EXIST",
+                "RECEIVER-ACTION-NOT-DEFINE",
+                "RECEIVER-NOT-ACTION-TYPE",
+                "RECEIVER-WRONG-SYNTAX"
+        );
         while (true) {
             // Removing an element from the Queue using poll()
             // The poll() method returns null if the Queue is empty.
             Process_Request process_mo = null;
             try {
                 //consuming messages 
-                process_mo = send_queue.take();
+                synchronized (this) {
+                    logger.info("Sender Queue size :" + send_queue.size());
+                    process_mo = send_queue.take();
+                }
                 logger.info("Get message in the sender queue :" + process_mo);
-                logger.info("Sender Queue size :" + send_queue.size());
+                
             } catch (InterruptedException e) {
                 logger.error("Error to Get in reg_queue :" + process_mo, e);
             }
 
             if (process_mo != null) {
+
                 String transactionid = process_mo.getTransaction_id();
                 String receiver = process_mo.getMsisdn();
-                String sender = process_mo.getSendChannel();
                 String nofif_code = process_mo.getNotificationCode();
+                String sender = process_mo.getSendChannel();
+
+                if (listLebelNotif.contains(nofif_code)) {
+                    Notification_Conf notif_conf_chanel = notification.get("DEFAULT-CHANNEL");
+                    if (!StringUtils.isBlank(notif_conf_chanel.getNotificationValue())) {
+                        sender = notif_conf_chanel.getNotificationValue();
+                    }
+                }
+
                 String message = nofif_code;
                 SETVARIABLE = process_mo.getSetvariable();
                 if (!StringUtils.isBlank(nofif_code)) {
@@ -106,11 +126,16 @@ public class Sender implements Runnable {
                     JSONObject jsonObject = new JSONObject();
 
                     if (notif_conf != null) {
-                        message = notif_conf.getNotificationValue();
+                        message = notif_conf.getNoficationName();
+                        if (notif_conf.getNotificationValue() != null) {
+                            message = notif_conf.getNotificationValue();
+                        }
 
-                        for (Map.Entry<String, String> variable : SETVARIABLE.entrySet()) {
-                            if (variable.getValue() != null) {
-                                message = message.replace(variable.getKey(), variable.getValue());
+                        if (SETVARIABLE != null && !SETVARIABLE.isEmpty()) {
+                            for (Map.Entry<String, String> variable : SETVARIABLE.entrySet()) {
+                                if (variable.getValue() != null) {
+                                    message = message.replace(variable.getKey(), variable.getValue());
+                                }
                             }
                         }
 
@@ -123,17 +148,12 @@ public class Sender implements Runnable {
                             jsonObject.put("content", message);
                             jsonObject.put("exchange_mode", "SENDER");
 
-                            
-
                         } catch (JSONException e) {
                             logger.error(e.getMessage());
                         }
                         logger.info("Msisdn :" + receiver + " --> Channel : " + sender + " --> Notification Code : " + nofif_code + " --> Message :  " + message);
-
-                        myKafkaProducer.sendMessage(jsonObject.toString());
-
                     } else {
-                         try {
+                        try {
                             jsonObject.put("transaction_id", transactionid);
                             jsonObject.put("service_id", process_mo.getServiceName());
                             jsonObject.put("message_id", "message_1");
@@ -148,7 +168,7 @@ public class Sender implements Runnable {
 
                         logger.warn("Msisdn :" + receiver + " --> Channel : " + sender + " --> Notification Code : " + nofif_code + " --> Message Not provide in DB");
                     }
-                    myKafkaProducer.sendMessage(jsonObject.toString());
+                    myKafkaProducer.sendDataToKafka(jsonObject.toString());
                 } else {
                     logger.warn("Msisdn :" + receiver + " --> Channel : " + sender + " --> Not Notification Code  Provided ");
                 }

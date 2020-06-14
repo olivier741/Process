@@ -70,7 +70,7 @@ public class MyKafkaConsumer {
 
     @KafkaListener(topics = "${spring.kafka.consumer.topic}")
     public void listenPartition0(ConsumerRecord<?, ?> record) {
-        logger.info("Listener Id0, Thread ID: " + Thread.currentThread().getId());
+        logger.info("Listener Id1, Thread ID: " + Thread.currentThread().getId());
         String word = String.valueOf(record.value());
         processReceive(word, "listenPartition0");
         countDownLatch0.countDown();
@@ -86,7 +86,7 @@ public class MyKafkaConsumer {
 
     @KafkaListener(topics = "${spring.kafka.consumer.topic}")
     public void listenPartition2(ConsumerRecord<?, ?> record) {
-        logger.info("Listener Id2, Thread ID: " + Thread.currentThread().getId());
+        logger.info("Listener Id3, Thread ID: " + Thread.currentThread().getId());
         String word = String.valueOf(record.value());
         processReceive(word, "listenPartition3");
         countDownLatch0.countDown();
@@ -94,7 +94,7 @@ public class MyKafkaConsumer {
 
     @KafkaListener(topics = "${spring.kafka.consumer.topic}")
     public void listenPartition3(ConsumerRecord<?, ?> record) {
-        logger.info("Listener Id2, Thread ID: " + Thread.currentThread().getId());
+        logger.info("Listener Id4, Thread ID: " + Thread.currentThread().getId());
         String word = String.valueOf(record.value());
         processReceive(word, "listenPartition4");
         countDownLatch0.countDown();
@@ -102,7 +102,7 @@ public class MyKafkaConsumer {
 
     @KafkaListener(topics = "${spring.kafka.consumer.topic}")
     public void listenPartition4(ConsumerRecord<?, ?> record) {
-        logger.info("Listener Id2, Thread ID: " + Thread.currentThread().getId());
+        logger.info("Listener Id5, Thread ID: " + Thread.currentThread().getId());
         String word = String.valueOf(record.value());
         processReceive(word, "listenPartition5");
         countDownLatch0.countDown();
@@ -126,7 +126,7 @@ public class MyKafkaConsumer {
                     To make sure we successfully deserialized the message to a JSON object, we'll
                     log the index of JSON object.
              */
-            logger.info(listenPartition + " -- request recieve : \n" + receivedJsonObject.toString());
+            logger.info(listenPartition + " -- request recieve  -- " + receivedJsonObject.toString());
 
             Timestamp receive_time = new Timestamp(System.currentTimeMillis());
 
@@ -135,7 +135,7 @@ public class MyKafkaConsumer {
             String receiver = receivedJsonObject.getString("receiver");
             String msisdn = receivedJsonObject.getString("sender");
             String exchange_mode = receivedJsonObject.getString("exchange_mode");
-            String service_name = receivedJsonObject.getString("service_id");
+            String service_name_gw = receivedJsonObject.getString("service_id");
 
             Process_Request process_req = new Process_Request();
 
@@ -150,7 +150,7 @@ public class MyKafkaConsumer {
             process_req.setRcvChannel(receiver);
             process_req.setSendChannel(receiver);
 
-            List<Request_Conf> listCommand_conf = getCheck_CommandConf(content);
+            List<Request_Conf> listCommand_conf = getCheck_CommandConf(content, service_name_gw);
 
             logger.info(listenPartition + "-- transaction_id   : " + transaction_id);
             logger.info(listenPartition + " -- content send by customer   : " + content);
@@ -328,7 +328,7 @@ public class MyKafkaConsumer {
         }
     }
 
-    private static List<Request_Conf> getCheck_CommandConf(final String command) {
+    private static List<Request_Conf> getCheck_CommandConf(final String command, final String service_gw) {
 
         List<Request_Conf> result = new ArrayList<Request_Conf>();
 
@@ -337,6 +337,7 @@ public class MyKafkaConsumer {
         }
 
         CollectionUtils.filter(result, new Predicate() {
+            Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
             @Override
             public boolean evaluate(Object o) {
@@ -345,6 +346,7 @@ public class MyKafkaConsumer {
                 String check_param_pattern = null;
                 String check_cmd = null;
                 String separator = null;
+                String service = null;
 
                 // get separator from database. if not separator, get space as default
                 separator = ((Request_Conf) o).getSplitSeparator();
@@ -364,6 +366,9 @@ public class MyKafkaConsumer {
                     check_param_pattern = "";
                 }
 
+                // get service name from database
+                service = ((Request_Conf) o).getServiceName();
+
                 // get command from database
                 check_cmd = ((Request_Conf) o).getCommandCode().toUpperCase().trim();
 
@@ -373,30 +378,78 @@ public class MyKafkaConsumer {
                 // build regex pattern to check separator between command or parameter
                 Pattern pattern_separator = Pattern.compile(separator);
 
+                Pattern pattern_service = Pattern.compile(service_gw);
+
                 // get list command + param send by customer
                 List<String> listCommand = Arrays.asList(pattern_separator.split(command));
 
                 //check number of parameter 
-                boolean match_lenght = true;
-                if (check_lengh_param != 0) {
-                    match_lenght = (listCommand.size() - 1) == check_lengh_param;
-                }
+                int numbParam = listCommand.size() - 1;
+                boolean match_lenght = numbParam == check_lengh_param;
 
                 //check command
                 boolean match_cmd = check_cmd.equals(listCommand.get(0).toUpperCase().trim());
 
-                boolean match_param = true;
-
-                if (check_lengh_param > 0 && match_lenght) {
-                    // check separator                    
-                    for (int i = 1; i < listCommand.size(); i++) {
-                        //check parameter 
-                        match_param = match_param && pattern_param.matcher(listCommand.get(i).toUpperCase().trim()).find();
-                    }
-
+                //check service
+                boolean match_service = false;
+                if (StringUtils.isBlank(service) && StringUtils.isBlank(service_gw)) {
+                    match_service = true;
+                } else if (!StringUtils.isBlank(service) && !StringUtils.isBlank(service_gw)) {
+                    match_service = pattern_service.matcher(service.toUpperCase().trim()).find();
                 }
 
-                return match_cmd && match_lenght && match_param;
+                String param_chain = "";
+                for (int i = 1; i < listCommand.size(); i++) {
+                    //check parameter 
+                    if (i != 1) {
+                        param_chain = param_chain + " | " + listCommand.get(i).toUpperCase().trim();
+                    } else {
+                        param_chain = listCommand.get(i).toUpperCase().trim();
+                    }
+                }
+
+                boolean match_param = false;
+                if (check_lengh_param >= 0 && match_lenght) {
+                    // check separator       
+
+                    if (check_lengh_param == 0) {
+                        match_param = true;
+                    } else {
+                        for (int i = 1; i < listCommand.size(); i++) {
+                            //check parameter 
+                            match_param = match_param && pattern_param.matcher(listCommand.get(i).toUpperCase().trim()).find();
+                        }
+
+                    }
+                }
+
+                logger.info("########################### CHECKING SYNTAX ###########################");
+
+                if (match_cmd) {
+                    logger.info("SYNTAX MATCH -- reques: " + listCommand.get(0) + " -- command : " + check_cmd);
+                } else {
+                    logger.info("SYNTAX NOT MATCH -- reques: " + listCommand.get(0) + " -- command : " + check_cmd);
+                }
+
+                if (match_lenght) {
+                    logger.info("SYNTAX MATCH -- Number Parameter: " + numbParam + " -- lengh_param : " + check_lengh_param);
+                } else {
+                    logger.info("SYNTAX NOT MATCH -- Number Parameter: " + numbParam + " -- lengh_param : " + check_lengh_param);
+                }
+
+                if (match_param) {
+                    logger.info("SYNTAX MATCH -- Parameters: " + param_chain + " -- regex : " + check_param_pattern);
+                } else {
+                    logger.info("SYNTAX NOT MATCH -- Parameters: " + param_chain + " -- regex : " + check_param_pattern);
+                }
+
+                if (match_service) {
+                    logger.info("SYNTAX MATCH -- regex service: " + service_gw + " -- service : " + service);
+                } else {
+                    logger.info("SYNTAX NOT MATCH -- regex service: " + service_gw + " -- service : " + service);
+                }
+
+                return match_cmd && match_lenght && match_param && match_service;
             }
 
         });

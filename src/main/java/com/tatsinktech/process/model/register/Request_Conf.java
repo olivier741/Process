@@ -58,7 +58,7 @@ import org.hibernate.annotations.Synchronize;
         + "	   prod.extend_fee, \n"
         + "        promo.promotion_name, \n"
         + "        promo.promotion_filter, \n"
-        + "        promo.msisdn_table, \n"
+        + "        promo.istableselected, \n"
         + "        promo.msisdn_regex, \n"
         + "        promo.start_time promo_start_time, \n"
         + "        promo.end_time promo_end_time, \n"
@@ -173,8 +173,8 @@ public class Request_Conf implements Serializable {
     @Column(name = "promotion_filter")
     private Promo_Filter promotionFilter;
 
-    @Column(name = "msisdn_table")
-    private String msisdnTable;
+    @Column(name ="istableselected",nullable = true)
+    private Boolean isTableSelected;
 
     @Column(name = "msisdn_regex")
     private String msisdnRegex;

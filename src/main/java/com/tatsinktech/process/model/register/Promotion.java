@@ -48,7 +48,7 @@ public class Promotion extends AbstractModel<Long> {
     @Column(name ="promotion_filter")
     private Promo_Filter promotionFilter;
         
-    @Column(name ="isTableSelected",nullable = true)
+    @Column(name ="istableselected",nullable = true)
     private Boolean isTableSelected;
     
     @Column(name ="msisdn_regex",nullable = true)
