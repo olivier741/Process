@@ -23,15 +23,18 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.regex.Pattern;
+import javax.annotation.PostConstruct;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  *
  * @author olivier.tatsinkou
  */
+@Component
 public class Process_Guide implements Runnable {
 
     private static Logger logger = LoggerFactory.getLogger(Process_Guide.class);
@@ -45,7 +48,11 @@ public class Process_Guide implements Runnable {
     private Mo_HistRepository mohisRepo;
 
     @Autowired
-    private static Load_Configuration commonConfig;
+    private Load_Configuration commonConfig;
+
+    public static void setGuide_queue(BlockingQueue<Process_Request> guide_queue) {
+        Process_Guide.guide_queue = guide_queue;
+    }
 
     public static void addMo_Queue(Process_Request process_req) {
         try {
@@ -57,12 +64,11 @@ public class Process_Guide implements Runnable {
 
     }
 
-    public static void loadFeatures(BlockingQueue<Process_Request> guide_queue) {
-        Process_Guide.guide_queue = guide_queue;
-        Process_Guide.sleep_duration = Integer.parseInt(commonConfig.getApplicationProcessRegSleepDuration());
+    @PostConstruct
+    private void init() {
+        Process_Guide.sleep_duration = Integer.parseInt(commonConfig.getApplicationProcessGuideSleepDuration());
         Process_Guide.SETPRODUCT = commonConfig.getSETPRODUCT();
         Process_Guide.address = Utils.gethostName();
-
     }
 
     @Override

@@ -16,8 +16,13 @@ import com.tatsinktech.process.config.Load_Configuration;
 import com.tatsinktech.process.model.register.Charge_Event;
 import com.tatsinktech.process.model.register.Charge_Hist;
 import com.tatsinktech.process.model.repository.Charge_HistRepository;
+import com.tatsinktech.process.util.ConverterXML_JSON;
+import com.tatsinktech.process.util.Utils;
 import java.net.InetAddress;
 import java.text.SimpleDateFormat;
+import javax.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -28,6 +33,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class BillingClient {
 
+    Logger logger = LoggerFactory.getLogger(this.getClass().getName());
+
     @Autowired
     private OAuth2RestTemplate oAuth2RestTemplate;
 
@@ -36,71 +43,84 @@ public class BillingClient {
 
     @Autowired
     private Charge_HistRepository chargehistRepo;
-    
-    private InetAddress address;
+
+    private static InetAddress address;
+
+    @PostConstruct
+    private void init() {
+        BillingClient.address = Utils.gethostName();
+
+    }
 
     public int charge(WS_Request wsRequest) {
         int result = -1;
         ObjectMapper objectMapper = new ObjectMapper();
-        ResponseEntity<WS_Response> response = oAuth2RestTemplate.postForEntity(commonConfig.getChargingUrl(), wsRequest, WS_Response.class);
+        String jsonRequest = null;
 
+        try {
+            jsonRequest = objectMapper.writeValueAsString(wsRequest);
+            logger.info("################## request for Charge #############################");
+            logger.info("URL = " + commonConfig.getChargingUrl());
+            logger.info(jsonRequest);
+        } catch (Exception e) {
+
+        }
+
+        ResponseEntity<String> response = oAuth2RestTemplate.postForEntity(commonConfig.getChargingUrl(), jsonRequest, String.class);
+
+        logger.info("################## response for Charge #############################");
+        logger.info(response.getBody());
         HttpStatus httpStatus = response.getStatusCode();
-        WS_Response ws_response = response.getBody();
+        
+        WS_Response ws_response = null;
+        
+        try {
+            ws_response = ConverterXML_JSON.convertJsonToWS_Response(response.getBody());
+        } catch (Exception e) {
+
+        }
 
         String apiGWDescription = null;
-        String apiGWError = null;
-        String wsError = null;
-        String wsContent = null;
-        String request_time = null;
         String response_time = null;
         long duration = 0;
 
+        String requestAsString = null;
+        String responseAsString = null;
+
+        try {
+            requestAsString = objectMapper.writeValueAsString(wsRequest);
+            responseAsString = objectMapper.writeValueAsString(ws_response);
+        } catch (Exception e) {
+
+        }
+        Charge_Hist charge_hist = new Charge_Hist();
+        charge_hist.setChargeFee(0);
         switch (httpStatus) {
-            case CREATED:
+            case OK:
                 apiGWDescription = ws_response.getAPI_GW_Description();
-                apiGWError = ws_response.getAPI_GW_Error();
-                wsError = ws_response.getWS_Error();
-                wsContent = ws_response.getWS_ResponseContent();
-                request_time = ws_response.getWS_request_time();
+                result = ws_response.getAPI_GW_Error();
                 response_time = ws_response.getWS_response_time();
                 duration = ws_response.getDuration();
 
-                
-                if (apiGWError.equals("00")) { // success charge
-                    result = 0;
-                }
-
-                if (apiGWError.equals("01")) { // not enough money
-                    result = 1;
+                if (result== 0) { // success charge
+                    charge_hist.setChargeFee(wsRequest.getAmount());
                 }
                 
-                 if (apiGWError.equals("02")) { // customer is wrong status (inactive or block)
-                    result = 2;
+                if (result== 3) { // time out
+                    result=-1;
                 }
-                break;
-            case BAD_REQUEST:
+                
+                
 
                 break;
-        }
-        String requestAsString = null;
-        String responseAsString = null;
-        try {
-        requestAsString = objectMapper.writeValueAsString(wsRequest);
-        responseAsString = objectMapper.writeValueAsString(ws_response);
-        } catch (Exception e) {
-            
         }
         
-
-        Charge_Hist charge_hist = new Charge_Hist();
-        charge_hist.setChargeError(apiGWError);
-        charge_hist.setChargeFee(wsRequest.getAmount());
+        charge_hist.setChargeError(result);
         charge_hist.setChargeMode(Charge_Event.REGISTRATION);
         charge_hist.setChargeRequest(requestAsString);
         charge_hist.setChargeResponse(responseAsString);
         try {
             charge_hist.setChargeTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(response_time));
-            
         } catch (Exception e) {
         }
         charge_hist.setDuration(duration);

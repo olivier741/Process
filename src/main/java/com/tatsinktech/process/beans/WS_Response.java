@@ -36,7 +36,7 @@ public class WS_Response implements Serializable{
     private String ws_AccessMgntName;
     private String WS_request_time;
     private String WS_response_time;
-    private String API_GW_Error;
+    private int API_GW_Error;
     private String API_GW_Description;
     private String WS_ResponseContent;
     private String WS_Error;

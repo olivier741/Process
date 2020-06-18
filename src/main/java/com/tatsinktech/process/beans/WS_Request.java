@@ -38,9 +38,9 @@ import lombok.ToString;
 @ToString
 @XmlRootElement(name = "Request")
 public class WS_Request  implements Serializable{
-    private String processUnit;
-    private String transactionId;
+   
     private String msisdn;
+    private String transactionId;
     private long amount;
     private String productCode;
     private String charge_reason;
@@ -48,5 +48,6 @@ public class WS_Request  implements Serializable{
     private String wsClientpassword;
     private Date request_time;
     private String ws_AccessMgntName;
+    private String processUnit;
     private List<Param> WSparam = new ArrayList<Param>();
 }

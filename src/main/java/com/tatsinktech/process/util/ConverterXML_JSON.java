@@ -38,20 +38,15 @@ package com.tatsinktech.process.util;
  * limitations under the License.
 
  */
-
 import java.io.IOException;
-
 import com.fasterxml.jackson.core.JsonGenerationException;
-
 import com.fasterxml.jackson.databind.JsonMappingException;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import com.tatsinktech.process.beans.DeliveryMessage;
-
 import com.tatsinktech.process.beans.Message_Exchg;
-
 import com.tatsinktech.process.beans.Process_Request;
+import com.tatsinktech.process.beans.WS_Request;
+import com.tatsinktech.process.beans.WS_Response;
 
 /**
  *
@@ -60,8 +55,6 @@ import com.tatsinktech.process.beans.Process_Request;
  * @author olivier.tatsinkou
  *
  */
-
-
 public class ConverterXML_JSON {
 
     public static String convertMsgExchToJson(Message_Exchg msg_exch) {
@@ -137,7 +130,7 @@ public class ConverterXML_JSON {
         String result = null;
         try {
             // Convert object to JSON string and pretty print
-           result = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(msg_exch);
+            result = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(msg_exch);
         } catch (JsonGenerationException e) {
             e.printStackTrace();
         } catch (JsonMappingException e) {
@@ -166,261 +159,56 @@ public class ConverterXML_JSON {
 
     }
 
-//    public static String convertWS_ResponseToXML(WS_Response request) {
-//
-//        String result = null;
-//
-//        try {
-//
-//            //Create JAXB Context
-//            JAXBContext jaxbContext = JAXBContext.newInstance(WS_Response.class);
-//
-//            //Create Marshaller
-//            Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
-//
-//            //Required formatting??
-//            jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-//
-//            //Print XML String to Console
-//            StringWriter sw = new StringWriter();
-//
-//            //Write XML to StringWriter
-//            jaxbMarshaller.marshal(request, sw);
-//
-//            //Verify XML Content
-//            //Verify XML Content
-//            String stringResp = sw.toString();
-//
-//            stringResp = stringResp.replace("&lt;", "<");
-//
-//            stringResp = stringResp.replace("&gt;", ">");
-//
-//            result = stringResp;
-//
-//        } catch (JAXBException e) {
-//
-//            e.printStackTrace();
-//
-//        }
-//
-//        return result;
-//
-//    }
+    public static String convertWS_RequestToJSON(WS_Request request) {
 
-//    public static String convertWS_RequestToXML(WS_Request request) {
-//
-//        String result = null;
-//
-//        try {
-//
-//            //Create JAXB Context
-//            JAXBContext jaxbContext = JAXBContext.newInstance(WS_Request.class);
-//
-//            //Create Marshaller
-//            Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
-//
-//            //Required formatting??
-//            jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-//
-//            //Print XML String to Console
-//            StringWriter sw = new StringWriter();
-//
-//            //Write XML to StringWriter
-//            jaxbMarshaller.marshal(request, sw);
-//
-//            //Verify XML Content
-//            String stringResp = sw.toString();
-//
-//            stringResp = stringResp.replace("&lt;", "<");
-//
-//            stringResp = stringResp.replace("&gt;", ">");
-//
-//            result = stringResp;
-//
-//        } catch (JAXBException e) {
-//
-//            e.printStackTrace();
-//
-//        }
-//
-//        return result;
-//
-//    }
-//
-//    public static String convertCredentialToXML(Credential response) {
-//
-//        String result = null;
-//
-//        try {
-//
-//            //Create JAXB Context
-//            JAXBContext jaxbContext = JAXBContext.newInstance(Credential.class);
-//
-//            //Create Marshaller
-//            Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
-//
-//            //Required formatting??
-//            jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-//
-//            //Print XML String to Console
-//            StringWriter sw = new StringWriter();
-//
-//            //Write XML to StringWriter
-//            jaxbMarshaller.marshal(response, sw);
-//
-//            //Verify XML Content
-//            String stringResp = sw.toString();
-//
-//            stringResp = stringResp.replace("&lt;", "<");
-//
-//            stringResp = stringResp.replace("&gt;", ">");
-//
-//            result = stringResp;
-//
-//        } catch (JAXBException e) {
-//
-//            e.printStackTrace();
-//
-//        }
-//
-//        return result;
-//
-//    }
-//
-//    public static String convertWS_Block_ResponseToXML(WS_Block_Response request) {
-//
-//        String result = null;
-//
-//        try {
-//
-//            //Create JAXB Context
-//            JAXBContext jaxbContext = JAXBContext.newInstance(WS_Block_Response.class);
-//
-//            //Create Marshaller
-//            Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
-//
-//            //Required formatting??
-//            jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-//
-//            //Print XML String to Console
-//            StringWriter sw = new StringWriter();
-//
-//            //Write XML to StringWriter
-//            jaxbMarshaller.marshal(request, sw);
-//
-//            //Verify XML Content
-//            String stringResp = sw.toString();
-//
-//            stringResp = stringResp.replace("&lt;", "<");
-//
-//            stringResp = stringResp.replace("&gt;", ">");
-//
-//            result = stringResp;
-//
-//        } catch (JAXBException e) {
-//
-//            e.printStackTrace();
-//
-//        }
-//
-//        return result;
-//
-//    }
-//
-//    public static String convertWs_Block_RequesttoXML(Ws_Block_Request request) {
-//
-//        String result = null;
-//
-//        try {
-//
-//            //Create JAXB Context
-//            JAXBContext jaxbContext = JAXBContext.newInstance(Ws_Block_Request.class);
-//
-//            //Create Marshaller
-//            Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
-//
-//            //Required formatting??
-//            jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-//
-//            //Print XML String to Console
-//            StringWriter sw = new StringWriter();
-//
-//            //Write XML to StringWriter
-//            jaxbMarshaller.marshal(request, sw);
-//
-//            //Verify XML Content
-//            String stringResp = sw.toString();
-//
-//            stringResp = stringResp.replace("&lt;", "<");
-//
-//            stringResp = stringResp.replace("&gt;", ">");
-//
-//            result = stringResp;
-//
-//        } catch (JAXBException e) {
-//
-//            e.printStackTrace();
-//
-//        }
-//
-//        return result;
-//
-//    }
-//
-//    public static Map<String, String> convertMultiToRegularMap(MultivaluedMap<String, String> m) {
-//
-//        Map<String, String> map = new HashMap<String, String>();
-//
-//        if (m == null) {
-//
-//            return map;
-//
-//        }
-//
-//        for (Map.Entry<String, List<String>> entry : m.entrySet()) {
-//
-//            StringBuilder sb = new StringBuilder();
-//
-//            for (String s : entry.getValue()) {
-//
-//                if (sb.length() > 0) {
-//
-//                    sb.append(',');
-//
-//                }
-//
-//                sb.append(s);
-//
-//            }
-//
-//            map.put(entry.getKey(), sb.toString());
-//
-//        }
-//
-//        return map;
-//
-//    }
-//
-//    public static Map<String, String> getSoap_Header1(MimeHeaders hdrs) {
-//
-//        Map<String, String> headers = new HashMap<String, String>();
-//
-//        Iterator i = hdrs.getAllHeaders();
-//
-//        while (i.hasNext()) {
-//
-//            MimeHeader header = (MimeHeader) i.next();
-//
-//            if (header != null) {
-//
-//                headers.put(header.getName(), header.getValue());
-//
-//            }
-//
-//        }
-//
-//        return headers;
-//
-//    }
+        ObjectMapper mapper = new ObjectMapper();
+        String result = null;
+        try {
+            // Convert object to JSON string and pretty print
+            result = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(request);
+        } catch (JsonGenerationException e) {
+            e.printStackTrace();
+        } catch (JsonMappingException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return result;
 
+    }
+
+    public static WS_Request convertJsonToWS_Request(String request) {
+
+        ObjectMapper mapper = new ObjectMapper();
+        WS_Request result = null;
+        try {
+            // Convert JSON string to Object
+            result = mapper.readValue(request, WS_Request.class);
+        } catch (JsonGenerationException e) {
+            e.printStackTrace();
+        } catch (JsonMappingException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    
+     public static WS_Response convertJsonToWS_Response(String response) {
+
+        ObjectMapper mapper = new ObjectMapper();
+        WS_Response result = null;
+        try {
+            // Convert JSON string to Object
+            result = mapper.readValue(response, WS_Response.class);
+        } catch (JsonGenerationException e) {
+            e.printStackTrace();
+        } catch (JsonMappingException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
 }

@@ -108,15 +108,6 @@ public class MyKafkaConsumer {
         countDownLatch0.countDown();
     }
 
-//
-//    @KafkaListener( topicPartitions = {
-//        @TopicPartition(topic = "${spring.kafka.consumer.topic}", partitions = {"3"})})
-//    public void listenPartition3(ConsumerRecord<?, ?> record) {
-//        logger.info("Listener Id3, Thread ID: " + Thread.currentThread().getId());
-//        String word = String.valueOf(record.value());
-//        processReceive(word);
-//        countDownLatch3.countDown();
-//    }
     private void processReceive(String word, String listenPartition) {
         JSONObject receivedJsonObject = null;
         try {
@@ -150,14 +141,14 @@ public class MyKafkaConsumer {
             process_req.setRcvChannel(receiver);
             process_req.setSendChannel(receiver);
 
-            List<Request_Conf> listCommand_conf = getCheck_CommandConf(content, service_name_gw);
+            List<Request_Conf> listCommand_conf = getCheck_CommandConf(content, service_name_gw,receiver);
 
             logger.info(listenPartition + "-- transaction_id   : " + transaction_id);
             logger.info(listenPartition + " -- content send by customer   : " + content);
             logger.info(listenPartition + " -- customer phone number      : " + msisdn);
             logger.info(listenPartition + " -- short code                 : " + receiver);
 
-            if (listCommand_conf.size() > 0) {
+            if (listCommand_conf!= null && !listCommand_conf.isEmpty()) {
                 // good syntax send by customer
                 Request_Conf current_cmd_conf = listCommand_conf.get(0);
 
@@ -328,7 +319,7 @@ public class MyKafkaConsumer {
         }
     }
 
-    private static List<Request_Conf> getCheck_CommandConf(final String command, final String service_gw) {
+    private static List<Request_Conf> getCheck_CommandConf(final String command, final String service_gw,final String channel) {
 
         List<Request_Conf> result = new ArrayList<Request_Conf>();
 
@@ -347,6 +338,7 @@ public class MyKafkaConsumer {
                 String check_cmd = null;
                 String separator = null;
                 String service = null;
+                String receiveChannel = null;
 
                 // get separator from database. if not separator, get space as default
                 separator = ((Request_Conf) o).getSplitSeparator();
@@ -368,6 +360,11 @@ public class MyKafkaConsumer {
 
                 // get service name from database
                 service = ((Request_Conf) o).getServiceName();
+                
+                receiveChannel = ((Request_Conf) o).getReceiveChannel();
+                if (StringUtils.isBlank(receiveChannel)){
+                    receiveChannel = "\\w";
+                }
 
                 // get command from database
                 check_cmd = ((Request_Conf) o).getCommandCode().toUpperCase().trim();
@@ -378,7 +375,11 @@ public class MyKafkaConsumer {
                 // build regex pattern to check separator between command or parameter
                 Pattern pattern_separator = Pattern.compile(separator);
 
+                // build regex pattern to check Service Name 
                 Pattern pattern_service = Pattern.compile(service_gw);
+                
+                // build regex pattern to check ReceiveChannel of service
+                Pattern pattern_rcvChannel = Pattern.compile(receiveChannel);
 
                 // get list command + param send by customer
                 List<String> listCommand = Arrays.asList(pattern_separator.split(command));
@@ -397,6 +398,10 @@ public class MyKafkaConsumer {
                 } else if (!StringUtils.isBlank(service) && !StringUtils.isBlank(service_gw)) {
                     match_service = pattern_service.matcher(service.toUpperCase().trim()).find();
                 }
+                
+                 //check service
+                boolean match_rcvChannel =  pattern_rcvChannel.matcher(channel.toUpperCase().trim()).find();
+               
 
                 String param_chain = "";
                 for (int i = 1; i < listCommand.size(); i++) {
@@ -449,7 +454,14 @@ public class MyKafkaConsumer {
                     logger.info("SYNTAX NOT MATCH -- regex service: " + service_gw + " -- service : " + service);
                 }
 
-                return match_cmd && match_lenght && match_param && match_service;
+                
+                 if (match_rcvChannel) {
+                    logger.info("SYNTAX MATCH -- Short Code : " + channel + " -- channel : " + receiveChannel);
+                } else {
+                    logger.info("SYNTAX NOT MATCH -- Short Code : " + channel + " -- channel : " + receiveChannel);
+                }
+                 
+                return match_cmd && match_lenght && match_param && match_service && match_rcvChannel;
             }
 
         });

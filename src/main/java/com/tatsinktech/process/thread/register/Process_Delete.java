@@ -26,15 +26,18 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.regex.Pattern;
+import javax.annotation.PostConstruct;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  *
  * @author olivier.tatsinkou
  */
+@Component
 public class Process_Delete implements Runnable {
 
     private static Logger logger = LoggerFactory.getLogger(Process_Delete.class);
@@ -52,7 +55,11 @@ public class Process_Delete implements Runnable {
     private Mo_HistRepository mohisRepo;
 
     @Autowired
-    private static Load_Configuration commonConfig;
+    private Load_Configuration commonConfig;
+    
+    public static void setDelete_queue(BlockingQueue<Process_Request> delete_queue) {
+        Process_Delete.delete_queue = delete_queue;
+    }
 
     public static void addMo_Queue(Process_Request process_req) {
         try {
@@ -64,12 +71,11 @@ public class Process_Delete implements Runnable {
 
     }
 
-    public static void loadFeatures(BlockingQueue<Process_Request> delete_queue) {
-        Process_Delete.delete_queue = delete_queue;
-        Process_Delete.sleep_duration = Integer.parseInt(commonConfig.getApplicationProcessRegSleepDuration());
+      @PostConstruct
+    private void init() {
+        Process_Delete.sleep_duration = Integer.parseInt(commonConfig.getApplicationProcessDelSleepDuration());
         Process_Delete.SETPRODUCT = commonConfig.getSETPRODUCT();
         Process_Delete.address = Utils.gethostName();
-
     }
 
     @Override

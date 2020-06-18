@@ -160,10 +160,24 @@ public class Process_Register implements Runnable {
                     Date prod_start_date = product.getStartTime();
                     Date prod_end_date = product.getEndTime();
 
-                    boolean isextend = product.getIsExtend();
-                    boolean isOveride = product.getIsOverideReg();
-                    boolean isframeVal = product.getIsFrameValidity();
-                    boolean isNotifyExt = product.getIsNotifyExtend();
+                    boolean isextend = false;
+                    if (product.getIsExtend() != null) {
+                        isextend = product.getIsExtend();
+                    }
+                    boolean isOveride = false;
+                    if (product.getIsOverideReg() != null) {
+                        isOveride = product.getIsOverideReg();
+                    }
+
+                    boolean isframeVal = false;
+                    if (product.getIsFrameValidity() != null) {
+                        isframeVal = product.getIsFrameValidity();
+                    }
+
+                    boolean isNotifyExt = false;
+                    if (product.getIsNotifyExtend() != null) {
+                        isNotifyExt = product.getIsNotifyExtend();
+                    }
 
                     String validity = product.getValidity();
 
@@ -271,146 +285,9 @@ public class Process_Register implements Runnable {
                     if (useproduct == 0) {
 
                         Promotion promo = product.getPromotion();
-
-                        if (promo != null && communsrv.authorizationPromo(msisdn.trim(), promo)) {  // offer have promotion and allow to get promotion
-
-                            Date promo_start_time = promo.getStartTime();
-                            Date promo_end_time = promo.getEndTime();
-
-                            if (promo_start_time != null && promo_end_time != null) {
-                                if (promo_start_time.after(promo_end_time)) {
-                                    // start time is after end time wrong time configuration     
-                                    useproduct = 7;
-                                    logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " will not be take care");
-                                    logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " have PROMO-START-TIME =" + promo_start_time + " which is after PROMO-END-TIME =" + promo_end_time);
-
-                                } else {
-                                    if (promo_start_time.after(receive_time)) {
-                                        // start time is after receive time customer cannot register to promotion. promotion not available.
-                                        logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " will not be take care");
-                                        logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " have PROMO-START-TIME =" + promo_start_time + " which is after CURRENT-TIME =" + receive_time);
-                                        useproduct = 8;
-                                    }
-                                    if (promo_end_time.before(receive_time)) {
-                                        logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " will not be take care");
-                                        logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " have PROMO-END-TIME =" + promo_end_time + " which is before CURRENT-TIME =" + receive_time);
-                                        useproduct = 9;            // end time is before receive time customer cannot register to promotion. promotion is expire
-                                    }
-                                }
-                            } else if (promo_start_time != null) {
-                                if (promo_start_time.after(receive_time)) {
-                                    // start time is after receive time customer cannot register to promotion. promotion not available.
-                                    logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " will not be take care");
-                                    logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " have PROMO-START-TIME =" + promo_start_time + " which is after CURRENT-TIME =" + receive_time);
-                                    useproduct = 8;
-                                }
-                            } else if (promo_end_time != null) {
-                                if (promo_end_time.before(receive_time)) {
-                                    // end time is before receive time customer cannot register to promotion. promotion is expire
-                                    logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " will not be take care");
-                                    logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " have PROMO-END-TIME =" + promo_end_time + " which is before CURRENT-TIME =" + receive_time);
-                                    useproduct = 9;
-                                }
-                            }
-
-                            // step 6
-                            if (useproduct == 0) {
-
-                                if (product.getRegFee() > 0 || promo.getPromotionRegFee() > 0) {
-                                    charge_fee = product.getRegFee();
-                                    long reductPerc = 0;
-                                    long prod_fee = product.getRegFee();
-                                    long reduct_val = 0;
-                                    Reduction_Type reductMode = promo.getReductionMode();
-                                    switch (reductMode) {
-                                        case PERCENTAGE:
-                                            reductPerc = promo.getPercentageReg();
-                                            reduct_val = prod_fee * reductPerc / 100;
-                                            charge_fee = Math.abs(prod_fee - reduct_val);
-
-                                            break;
-                                        case VALUE:
-                                            reduct_val = promo.getPromotionRegFee();
-                                            charge_fee = Math.abs(prod_fee - reduct_val);
-                                            break;
-                                    }
-
-                                    List<Param> listParam = new ArrayList<Param>();
-                                    listParam.add(new Param(commonConfig.getChargingAliasAmount(), String.valueOf(charge_fee)));
-                                    listParam.add(new Param(commonConfig.getChargingAliasMsisdn(), msisdn.trim()));
-                                    listParam.add(new Param(commonConfig.getChargingAliasProduct(), product_code));
-                                    listParam.add(new Param(commonConfig.getChargingAliasTransaction(), transaction_id));
-                                    listParam.add(new Param(commonConfig.getChargingAliasDescription(), "Charge " + product_code + " for " + charge_fee));
-
-                                    WS_Request wsRequest = new WS_Request();
-                                    wsRequest.setAmount(charge_fee);
-                                    wsRequest.setCharge_reason("Charge " + product_code + " for " + charge_fee);
-                                    wsRequest.setMsisdn(msisdn);
-                                    wsRequest.setProcessUnit("Process_Reg");
-                                    wsRequest.setTransactionId(transaction_id);
-                                    wsRequest.setWs_AccessMgntName(commonConfig.getChargingWsManagement());
-                                    wsRequest.setProductCode(product_code);
-                                    wsRequest.setWSparam(listParam);
-
-                                    int resp = billClient.charge(wsRequest);
-
-                                    if (resp == 1) {  // not enough money
-                                        logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " MSISDN = " + msisdn + " don't have enough money");
-                                        useproduct = 10;
-                                    }
-
-                                    if (resp == 2) {  // customer is block or inactive or cancel
-                                        logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " MSISDN = " + msisdn + " is inactive or Block or Cancel");
-
-                                        useproduct = 11;
-                                    }
-
-                                    if (resp == -1) {  // webservice error
-                                        logger.warn("OFFER :" + product_code + " with PROMOTION =" + promo + " MSISDN = " + msisdn + " WEBSERVICE FAIL or NOT PROCESS REQUEST");
-                                        useproduct = 12;
-                                    }
-                                }
-
-                            }
-                        } else {  // offer don't have promotion
-                            if (product.getRegFee() > 0) {
-                                charge_fee = product.getRegFee();
-
-                                List<Param> listParam = new ArrayList<Param>();
-                                listParam.add(new Param(commonConfig.getChargingAliasAmount(), String.valueOf(charge_fee)));
-                                listParam.add(new Param(commonConfig.getChargingAliasMsisdn(), msisdn.trim()));
-                                listParam.add(new Param(commonConfig.getChargingAliasProduct(), product_code));
-                                listParam.add(new Param(commonConfig.getChargingAliasTransaction(), transaction_id));
-                                listParam.add(new Param(commonConfig.getChargingAliasDescription(), "Charge " + product_code + " for " + charge_fee));
-
-                                WS_Request wsRequest = new WS_Request();
-                                wsRequest.setAmount(charge_fee);
-                                wsRequest.setCharge_reason("Charge " + product_code + " for " + charge_fee);
-                                wsRequest.setMsisdn(msisdn);
-                                wsRequest.setProcessUnit("Process_Reg");
-                                wsRequest.setTransactionId(transaction_id);
-                                wsRequest.setWs_AccessMgntName(commonConfig.getChargingWsManagement());
-                                wsRequest.setProductCode(product_code);
-                                wsRequest.setWSparam(listParam);
-
-                                int resp = billClient.charge(wsRequest);
-
-                                if (resp == 1) {  // not enough money
-                                    logger.warn("OFFER :" + product_code + " MSISDN = " + msisdn + " don't have enough money");
-                                    useproduct = 10;
-                                }
-
-                                if (resp == 2) {  // customer is block or inactive or cancel
-                                    logger.warn("OFFER :" + product_code + " MSISDN = " + msisdn + " is inactive or Block or Cancel");
-
-                                    useproduct = 11;
-                                }
-
-                                if (resp == -1) {  // webservice error
-                                    logger.warn("OFFER :" + product_code + " MSISDN = " + msisdn + " WEBSERVICE FAIL or NOT PROCESS REQUEST");
-                                    useproduct = 12;
-                                }
-                            }
+                        useproduct = executePromotion(msisdn, transaction_id, product, receive_time, promo);
+                        if (useproduct == 0) {
+                            useproduct = executeProductWithoutPromotion(msisdn, transaction_id, product);
                         }
 
                     }
@@ -480,18 +357,11 @@ public class Process_Register implements Runnable {
                             charge_status = 4;
                             break;
                         case 7:
-                        case 8:
-                        case 9:
-                            process_mo.setNotificationCode("REG-PRODUCT-PROMO-WRONG-TIME-" + product_code);
-                            mo_his_desc = "REG-PRODUCT-PROMO-WRONG-TIME-" + product_code;
-                            charge_status = 5;
-                            break;
-                        case 10:
                             process_mo.setNotificationCode("REG-PRODUCT-NOT-MONEY-" + product_code);
                             mo_his_desc = "REG-PRODUCT-NOT-MONEY-" + product_code;
                             charge_status = 6;
                             break;
-                        case 11:
+                        case 8:
                             if (oldReg != null) {
                                 oldReg.setStatus(-1);
                                 oldReg.setCancelTime(new Date());
@@ -502,7 +372,7 @@ public class Process_Register implements Runnable {
                             mo_his_desc = "REG-PRODUCT-CUSTOMER-BLOCK-" + product_code;
                             charge_status = 7;
                             break;
-                        case 12:
+                        case 9:
                             process_mo.setNotificationCode("REG-PRODUCT-WRONG-API-CONNECTION-" + product_code);
                             mo_his_desc = "REG-PRODUCT-WRONG-API-CONNECTION-" + product_code;
                             charge_status = 8;
@@ -557,6 +427,166 @@ public class Process_Register implements Runnable {
             }
 
         }
+    }
+
+    private int executePromotion(String msisdn, String transaction_id, Product product, Date receive_time, Promotion promo) {
+        long charge_fee = 0;
+        int useproduct = 0;
+        int result = 0;
+        if (promo != null && communsrv.authorizationPromo(msisdn.trim(), promo)) {  // offer have promotion and allow to get promotion
+            String promoName = promo.getPromotionName();
+            String product_code = product.getProductCode();
+            Date promo_start_time = promo.getStartTime();
+            Date promo_end_time = promo.getEndTime();
+
+            if (promo_start_time != null && promo_end_time != null) {
+                if (promo_start_time.after(promo_end_time)) {
+                    // start time is after end time wrong time configuration     
+                    useproduct = 1;
+                    logger.warn("OFFER :" + product_code + " with PROMOTION =" + promoName + " will not be take care");
+                    logger.warn("OFFER :" + product_code + " with PROMOTION =" + promoName + " have PROMO-START-TIME =" + promo_start_time + " which is after PROMO-END-TIME =" + promo_end_time);
+
+                } else {
+                    if (promo_start_time.after(receive_time)) {
+                        // start time is after receive time customer cannot register to promotion. promotion not available.
+                        logger.warn("OFFER :" + product_code + " with PROMOTION =" + promoName + " will not be take care");
+                        logger.warn("OFFER :" + product_code + " with PROMOTION =" + promoName + " have PROMO-START-TIME =" + promo_start_time + " which is after CURRENT-TIME =" + receive_time);
+                        useproduct = 2;
+                    }
+                    if (promo_end_time.before(receive_time)) {
+                        logger.warn("OFFER :" + product_code + " with PROMOTION =" + promoName + " will not be take care");
+                        logger.warn("OFFER :" + product_code + " with PROMOTION =" + promoName + " have PROMO-END-TIME =" + promo_end_time + " which is before CURRENT-TIME =" + receive_time);
+                        useproduct = 3;            // end time is before receive time customer cannot register to promotion. promotion is expire
+                    }
+                }
+            } else if (promo_start_time != null) {
+                if (promo_start_time.after(receive_time)) {
+                    // start time is after receive time customer cannot register to promotion. promotion not available.
+                    logger.warn("OFFER :" + product_code + " with PROMOTION =" + promoName + " will not be take care");
+                    logger.warn("OFFER :" + product_code + " with PROMOTION =" + promoName + " have PROMO-START-TIME =" + promo_start_time + " which is after CURRENT-TIME =" + receive_time);
+                    useproduct = 4;
+                }
+            } else if (promo_end_time != null) {
+                if (promo_end_time.before(receive_time)) {
+                    // end time is before receive time customer cannot register to promotion. promotion is expire
+                    logger.warn("OFFER :" + product_code + " with PROMOTION =" + promoName + " will not be take care");
+                    logger.warn("OFFER :" + product_code + " with PROMOTION =" + promoName + " have PROMO-END-TIME =" + promo_end_time + " which is before CURRENT-TIME =" + receive_time);
+                    useproduct = 5;
+                }
+            }
+
+            // step 6
+            if (useproduct == 0) {
+
+                if (product.getRegFee() > 0 || promo.getPromotionRegFee() > 0) {
+                    charge_fee = product.getRegFee();
+                    long reductPerc = 0;
+                    long prod_fee = product.getRegFee();
+                    long reduct_val = 0;
+                    Reduction_Type reductMode = promo.getReductionMode();
+                    switch (reductMode) {
+                        case PERCENTAGE:
+                            reductPerc = promo.getPercentageReg();
+                            reduct_val = prod_fee * reductPerc / 100;
+                            charge_fee = Math.abs(prod_fee - reduct_val);
+
+                            break;
+                        case VALUE:
+                            reduct_val = promo.getPromotionRegFee();
+                            charge_fee = Math.abs(prod_fee - reduct_val);
+                            break;
+                    }
+
+                    List<Param> listParam = new ArrayList<Param>();
+                    listParam.add(new Param(commonConfig.getChargingAliasAmount(), String.valueOf(charge_fee)));
+                    listParam.add(new Param(commonConfig.getChargingAliasMsisdn(), msisdn.trim()));
+                    listParam.add(new Param(commonConfig.getChargingAliasProduct(), product_code));
+                    listParam.add(new Param(commonConfig.getChargingAliasTransaction(), transaction_id));
+                    listParam.add(new Param(commonConfig.getChargingAliasDescription(), "Charge " + product_code + " for " + charge_fee));
+
+                    WS_Request wsRequest = new WS_Request();
+                    wsRequest.setAmount(charge_fee);
+                    wsRequest.setCharge_reason("Charge " + product_code + " for " + charge_fee);
+                    wsRequest.setMsisdn(msisdn);
+                    wsRequest.setProcessUnit("Process_Reg");
+                    wsRequest.setTransactionId(transaction_id);
+                    wsRequest.setRequest_time(new Date());
+                    wsRequest.setWsClientlogin(commonConfig.getChargingClientName());
+                    wsRequest.setWsClientpassword(commonConfig.getChargingPassword());
+                    wsRequest.setWs_AccessMgntName(commonConfig.getChargingWsManagement());
+                    wsRequest.setProductCode(product_code);
+                    wsRequest.setWSparam(listParam);
+
+                    int resp = billClient.charge(wsRequest);
+
+                    if (resp == 1) {  // not enough money
+                        logger.warn("OFFER :" + product_code + " with PROMOTION =" + promoName + " MSISDN = " + msisdn + " don't have enough money");
+                        result = 7;
+                    }
+
+                    if (resp == 2) {  // customer is block or inactive or cancel
+                        logger.warn("OFFER :" + product_code + " with PROMOTION =" + promoName + " MSISDN = " + msisdn + " is inactive or Block or Cancel");
+                        result = 8;
+                    }
+
+                    if (resp == -1) {  // webservice error
+                        logger.warn("OFFER :" + product_code + " with PROMOTION =" + promoName + " MSISDN = " + msisdn + " WEBSERVICE FAIL or NOT PROCESS REQUEST");
+                        result = 9;
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    private int executeProductWithoutPromotion(String msisdn, String transaction_id, Product product) {
+        int result = 0;
+        long charge_fee = 0;
+        String product_code = product.getProductCode();
+
+        if (product.getRegFee() > 0) {
+            charge_fee = product.getRegFee();
+
+            List<Param> listParam = new ArrayList<Param>();
+            listParam.add(new Param(commonConfig.getChargingAliasAmount(), String.valueOf(charge_fee)));
+            listParam.add(new Param(commonConfig.getChargingAliasMsisdn(), msisdn.trim()));
+            listParam.add(new Param(commonConfig.getChargingAliasProduct(), product_code));
+            listParam.add(new Param(commonConfig.getChargingAliasTransaction(), transaction_id));
+            listParam.add(new Param(commonConfig.getChargingAliasDescription(), "Charge " + product_code + " for " + charge_fee));
+
+            WS_Request wsRequest = new WS_Request();
+            wsRequest.setAmount(charge_fee);
+            wsRequest.setCharge_reason("Charge " + product_code + " for " + charge_fee);
+            wsRequest.setMsisdn(msisdn);
+            wsRequest.setProcessUnit("Process_Reg");
+            wsRequest.setTransactionId(transaction_id);
+            wsRequest.setRequest_time(new Date());
+            wsRequest.setWsClientlogin(commonConfig.getChargingClientName());
+            wsRequest.setWsClientpassword(commonConfig.getChargingPassword());
+            wsRequest.setWs_AccessMgntName(commonConfig.getChargingWsManagement());
+            wsRequest.setProductCode(product_code);
+            wsRequest.setWSparam(listParam);
+
+            int resp = billClient.charge(wsRequest);
+
+            if (resp == 1) {  // not enough money
+                logger.warn("OFFER :" + product_code + " MSISDN = " + msisdn + " don't have enough money");
+                result = 7;
+            }
+
+            if (resp == 2) {  // customer is block or inactive or cancel
+                logger.warn("OFFER :" + product_code + " MSISDN = " + msisdn + " is inactive or Block or Cancel");
+
+                result = 8;
+            }
+            
+
+            if (resp == -1) {  // webservice error
+                logger.warn("OFFER :" + product_code + " MSISDN = " + msisdn + " WEBSERVICE FAIL or NOT PROCESS REQUEST");
+                result = 9;
+            }
+        }
+        return result;
     }
 
     private Timestamp getExpire_Time(String validity, Timestamp current_time) {

@@ -73,7 +73,7 @@ public class Charge_Hist extends AbstractModel<Long> {
     private long duration;
 
     @Column(name = "charge_error")
-    private String chargeError;
+    private int chargeError;
     
     @Column(name = "productCode")
     private String productCode;

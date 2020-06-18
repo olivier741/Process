@@ -88,7 +88,7 @@ public class Load_Configuration implements Serializable {
     @Value("${application.processGuide.threadPool}")
     private String applicationProcessGuideThreadPool;
 
-    @Value("${application.processDel.sleep-duration}")
+    @Value("${application.processGuide.sleep-duration}")
     private String applicationProcessGuideSleepDuration;
 
     @Value("${application.processGuide.maxQueue}")
@@ -103,11 +103,8 @@ public class Load_Configuration implements Serializable {
     @Value("${security.oauth2.client.user-authorization-uri}")
     private String chargingUriCharge;
 
-    @Value("${security.oauth2.client.client-id}")
+    @Value("${charging.client-name}")
     private String chargingClientName;
-
-    @Value("${charging.user}")
-    private String chargingUser;
 
     @Value("${charging.password}")
     private String chargingPassword;
@@ -133,17 +130,8 @@ public class Load_Configuration implements Serializable {
     @Value("${viewApi.url}")
     private String viewApiUrl;
 
-    @Value("${viewApi.uri-auth}")
-    private String viewApiUriAuth;
-
-    @Value("${viewApi.uri-view}")
-    private String viewApiUriView;
-
     @Value("${viewApi.client-name}")
     private String viewApiClientName;
-
-    @Value("${viewApi.user}")
-    private String viewApiUser;
 
     @Value("${viewApi.password}")
     private String viewApiPassword;
@@ -306,10 +294,7 @@ public class Load_Configuration implements Serializable {
         return chargingClientName;
     }
 
-    public String getChargingUser() {
-        return chargingUser;
-    }
-
+   
     public String getChargingPassword() {
         return chargingPassword;
     }
@@ -338,22 +323,13 @@ public class Load_Configuration implements Serializable {
         return viewApiUrl;
     }
 
-    public String getViewApiUriAuth() {
-        return viewApiUriAuth;
-    }
-
-    public String getViewApiUriView() {
-        return viewApiUriView;
-    }
+   
 
     public String getViewApiClientName() {
         return viewApiClientName;
     }
 
-    public String getViewApiUser() {
-        return viewApiUser;
-    }
-
+ 
     public String getViewApiPassword() {
         return viewApiPassword;
     }

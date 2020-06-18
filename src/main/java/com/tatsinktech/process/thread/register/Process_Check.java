@@ -27,15 +27,18 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.regex.Pattern;
+import javax.annotation.PostConstruct;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  *
  * @author olivier.tatsinkou
  */
+@Component
 public class Process_Check implements Runnable {
 
     private static Logger logger = LoggerFactory.getLogger(Process_Check.class);
@@ -53,7 +56,11 @@ public class Process_Check implements Runnable {
     private Mo_HistRepository mohisRepo;
 
     @Autowired
-    private static Load_Configuration commonConfig;
+    private Load_Configuration commonConfig;
+
+    public static void setCheck_queue(BlockingQueue<Process_Request> check_queue) {
+        Process_Check.check_queue = check_queue;
+    }
 
     public static void addMo_Queue(Process_Request process_req) {
         try {
@@ -65,12 +72,11 @@ public class Process_Check implements Runnable {
 
     }
 
-    public static void loadFeatures(BlockingQueue<Process_Request> check_queue) {
-        Process_Check.check_queue = check_queue;
-        Process_Check.sleep_duration = Integer.parseInt(commonConfig.getApplicationProcessRegSleepDuration());
+    @PostConstruct
+    private void init() {
+        Process_Check.sleep_duration = Integer.parseInt(commonConfig.getApplicationProcessCheckSleepDuration());
         Process_Check.SETPRODUCT = commonConfig.getSETPRODUCT();
         Process_Check.address = Utils.gethostName();
-
     }
 
     @Override
@@ -121,7 +127,7 @@ public class Process_Check implements Runnable {
                     Date prod_end_date = product.getEndTime();
 
                     boolean isframeVal = product.getIsFrameValidity();
-                    
+
                     useproduct = 0;
 
                     if (useproduct == 0) {
@@ -227,7 +233,7 @@ public class Process_Check implements Runnable {
                 // send to sender
                 Sender.addMo_Queue(process_mo);
 
-                 Timestamp last_time = new Timestamp(System.currentTimeMillis());
+                Timestamp last_time = new Timestamp(System.currentTimeMillis());
                 long diffInMS = (last_time.getTime() - receive_time.getTime());
 
                 Mo_Hist mo_hist = new Mo_Hist();
@@ -249,7 +255,7 @@ public class Process_Check implements Runnable {
                 mo_hist.setServiceName(process_mo.getServiceName());
 
                 mohisRepo.save(mo_hist);
-                
+
                 logger.info("insert into mo_his");
 
             }

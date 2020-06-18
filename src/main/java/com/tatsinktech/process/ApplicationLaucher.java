@@ -7,6 +7,9 @@ package com.tatsinktech.process;
 
 import com.tatsinktech.process.beans.Process_Request;
 import com.tatsinktech.process.config.Load_Configuration;
+import com.tatsinktech.process.thread.register.Process_Check;
+import com.tatsinktech.process.thread.register.Process_Delete;
+import com.tatsinktech.process.thread.register.Process_Guide;
 import com.tatsinktech.process.thread.register.Process_Register;
 import com.tatsinktech.process.thread.sender.Sender;
 import java.util.ArrayList;
@@ -15,7 +18,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -58,17 +60,14 @@ public class ApplicationLaucher implements InitializingBean {
 
         int process_check_num = Integer.parseInt(commonConfig.getApplicationProcessCheckNumberThread());
         int process_check_pool = Integer.parseInt(commonConfig.getApplicationProcessCheckThreadPool());
-        int process_check_sleep_duration = Integer.parseInt(commonConfig.getApplicationProcessCheckSleepDuration());
         int process_check_maxQueue = Integer.parseInt(commonConfig.getApplicationProcessCheckMaxQueue());
 
         int process_del_num = Integer.parseInt(commonConfig.getApplicationProcessDelNumberThread());
         int process_del_pool = Integer.parseInt(commonConfig.getApplicationProcessDelThreadPool());
-        int process_del_sleep_duration = Integer.parseInt(commonConfig.getApplicationProcessDelSleepDuration());
         int process_del_maxQueue = Integer.parseInt(commonConfig.getApplicationProcessDelMaxQueue());
 
         int process_guide_num = Integer.parseInt(commonConfig.getApplicationProcessGuideNumberThread());
         int process_guide_pool = Integer.parseInt(commonConfig.getApplicationProcessGuideThreadPool());
-        int process_guide_sleep_duration = Integer.parseInt(commonConfig.getApplicationProcessGuideSleepDuration());
         int process_guide_maxQueue = Integer.parseInt(commonConfig.getApplicationProcessGuideMaxQueue());
 
         send_queue = new ArrayBlockingQueue<>(send_maxQueue);
@@ -77,7 +76,6 @@ public class ApplicationLaucher implements InitializingBean {
         check_queue = new ArrayBlockingQueue<>(process_check_maxQueue);
         guide_queue = new ArrayBlockingQueue<>(process_guide_maxQueue);
 
-        List<Runnable> receiver_runnables = new ArrayList<Runnable>();
         List<Runnable> sender_runnables = new ArrayList<Runnable>();
         List<Runnable> process_reg_runnables = new ArrayList<Runnable>();
         List<Runnable> process_del_runnables = new ArrayList<Runnable>();
@@ -105,25 +103,31 @@ public class ApplicationLaucher implements InitializingBean {
         Process_Register.executeRunnables(process_Execute_reg, process_reg_runnables);
 
 //        // process check
+//        Process_Check.setCheck_queue(check_queue);
 //        for (int i = 0; i < process_check_num; i++) {
-//            process_check_runnables.add(new Process_Check(emf, check_queue, process_check_sleep_duration));
+//            Process_Check checkProcessThread = (Process_Check) ConfAppContext.getBean(Process_Check.class);
+//            process_check_runnables.add(checkProcessThread);
 //        }
 //        ExecutorService process_Execute_check = Executors.newFixedThreadPool(process_check_pool);
 //        Process_Check.executeRunnables(process_Execute_check, process_check_runnables);
 //
 //        // process Delete
+//        Process_Delete.setDelete_queue(del_queue);
 //        for (int i = 0; i < process_del_num; i++) {
-//            process_del_runnables.add(new Process_Delete(emf, del_queue, process_del_sleep_duration));
+//            Process_Delete delProcessThread = (Process_Delete) ConfAppContext.getBean(Process_Delete.class);
+//            process_del_runnables.add(delProcessThread);
 //        }
 //        ExecutorService process_Execute_del = Executors.newFixedThreadPool(process_del_pool);
 //        Process_Delete.executeRunnables(process_Execute_del, process_del_runnables);
 //
-//        // process Guide
-//        for (int i = 0; i < process_guide_num; i++) {
-//            process_guide_runnables.add(new Process_Guide(emf, guide_queue, process_guide_sleep_duration));
-//        }
-//        ExecutorService process_Execute_guide = Executors.newFixedThreadPool(process_guide_pool);
-//        Process_Guide.executeRunnables(process_Execute_guide, process_guide_runnables);
+        // process Guide
+        Process_Guide.setGuide_queue(guide_queue);
+        for (int i = 0; i < process_guide_num; i++) {
+            Process_Guide guideProcessThread = (Process_Guide) ConfAppContext.getBean(Process_Guide.class);
+            process_guide_runnables.add(guideProcessThread);
+        }
+        ExecutorService process_Execute_guide = Executors.newFixedThreadPool(process_guide_pool);
+        Process_Guide.executeRunnables(process_Execute_guide, process_guide_runnables);
     }
 
 }
