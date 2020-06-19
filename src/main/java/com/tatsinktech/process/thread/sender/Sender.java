@@ -100,7 +100,7 @@ public class Sender implements Runnable {
                     process_mo = send_queue.take();
                 }
                 logger.info("Get message in the sender queue :" + process_mo);
-                
+
             } catch (InterruptedException e) {
                 logger.error("Error to Get in reg_queue :" + process_mo, e);
             }
@@ -110,7 +110,7 @@ public class Sender implements Runnable {
                 String transactionid = process_mo.getTransaction_id();
                 String receiver = process_mo.getMsisdn();
                 String nofif_code = process_mo.getNotificationCode();
-                String sender = process_mo.getSendChannel();
+                String sender = process_mo.getSendChannel().trim().toUpperCase();
 
                 if (listLebelNotif.contains(nofif_code)) {
                     Notification_Conf notif_conf_chanel = notification.get("DEFAULT-CHANNEL");
@@ -174,18 +174,21 @@ public class Sender implements Runnable {
                 }
                 Timestamp sendTime = new Timestamp(System.currentTimeMillis());
                 Mt_Hist mtHist = new Mt_Hist();
+                mtHist.setMsisdn(receiver);
                 mtHist.setChannel(sender);
-                mtHist.setCommandCode(process_mo.getCommanCode());
-                mtHist.setCommandName(process_mo.getCommandName());
+                mtHist.setCommandCode(process_mo.getCommanCode().trim().toUpperCase());
+                mtHist.setCommandName(process_mo.getCommandName().trim().toUpperCase());
                 mtHist.setDescription(process_mo.getNotificationCode());
                 mtHist.setIpAddress(address.getHostName() + "@" + address.getHostAddress());
                 mtHist.setMessage(message);
-                mtHist.setParamName(process_mo.getParamName());
+                if (process_mo.getParamName() != null) {
+                    mtHist.setParamName(process_mo.getParamName().trim().toUpperCase());
+                }
                 mtHist.setProcessUnit("Sender");
-                mtHist.setProductCode(process_mo.getProductCode());
+                mtHist.setProductCode(process_mo.getProductCode().trim().toUpperCase());
                 mtHist.setReceiveTime(process_mo.getReceiveTime());
                 mtHist.setSendTime(sendTime);
-                mtHist.setServiceName(process_mo.getServiceName());
+                mtHist.setServiceName(process_mo.getServiceName().trim().toUpperCase());
                 mtHist.setTransactionId(process_mo.getTransaction_id());
 
                 mthistRepo.save(mtHist);

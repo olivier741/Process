@@ -120,8 +120,8 @@ public class Process_Register implements Runnable {
             if (process_mo != null) {
                 String msisdn = process_mo.getMsisdn();
                 String transaction_id = process_mo.getTransaction_id();
-                String product_code = process_mo.getProductCode();
-                String exchange_mode = process_mo.getExchangeMode();
+                String product_code = process_mo.getProductCode().trim().toUpperCase(); 
+                String exchange_mode = process_mo.getExchangeMode().trim().toUpperCase();
                 Timestamp receive_time = process_mo.getReceiveTime();
                 String mo_his_desc = "";
 
@@ -302,6 +302,7 @@ public class Process_Register implements Runnable {
                                     reg = oldReg;
                                     reg.setNumberReg(oldReg.getNumberReg() + 1);
                                     reg.setRenewTime(new Date());
+                                    reg.setUnregTime(null);
                                     process_mo.setNotificationCode("REG-PRODUCT-SUCCESS-OVERIDE-" + product_code);
                                     mo_his_desc = "REG-PRODUCT-SUCCESS-OVERIDE-" + product_code;
                                 } else {                // not yet register
@@ -327,6 +328,7 @@ public class Process_Register implements Runnable {
                                 reg.setExpireTime(expire_time);
                                 reg.setMsisdn(msisdn);
                                 reg.setProduct(product);
+                                reg.setProductCode(product_code);
                                 reg.setStatus(1);
                                 reg.setTransactionId(transaction_id);
                             }
@@ -395,9 +397,9 @@ public class Process_Register implements Runnable {
                 Mo_Hist mo_hist = new Mo_Hist();
 
                 mo_hist.setActionType(process_mo.getActionType());
-                mo_hist.setChannel(process_mo.getSendChannel());
-                mo_hist.setCommandCode(process_mo.getCommanCode());
-                mo_hist.setCommandName(process_mo.getCommandName());
+                mo_hist.setChannel(process_mo.getSendChannel().trim().toUpperCase());
+                mo_hist.setCommandCode(process_mo.getCommanCode().trim().toUpperCase());
+                mo_hist.setCommandName(process_mo.getCommandName().trim().toUpperCase());
                 mo_hist.setContent(process_mo.getContent());
                 mo_hist.setMsisdn(msisdn);
                 mo_hist.setDuration(diffInMS);

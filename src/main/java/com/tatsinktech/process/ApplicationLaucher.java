@@ -102,24 +102,24 @@ public class ApplicationLaucher implements InitializingBean {
         ExecutorService process_Execute_reg = Executors.newFixedThreadPool(process_reg_pool);
         Process_Register.executeRunnables(process_Execute_reg, process_reg_runnables);
 
-//        // process check
-//        Process_Check.setCheck_queue(check_queue);
-//        for (int i = 0; i < process_check_num; i++) {
-//            Process_Check checkProcessThread = (Process_Check) ConfAppContext.getBean(Process_Check.class);
-//            process_check_runnables.add(checkProcessThread);
-//        }
-//        ExecutorService process_Execute_check = Executors.newFixedThreadPool(process_check_pool);
-//        Process_Check.executeRunnables(process_Execute_check, process_check_runnables);
-//
-//        // process Delete
-//        Process_Delete.setDelete_queue(del_queue);
-//        for (int i = 0; i < process_del_num; i++) {
-//            Process_Delete delProcessThread = (Process_Delete) ConfAppContext.getBean(Process_Delete.class);
-//            process_del_runnables.add(delProcessThread);
-//        }
-//        ExecutorService process_Execute_del = Executors.newFixedThreadPool(process_del_pool);
-//        Process_Delete.executeRunnables(process_Execute_del, process_del_runnables);
-//
+        // process check
+        Process_Check.setCheck_queue(check_queue);
+        for (int i = 0; i < process_check_num; i++) {
+            Process_Check checkProcessThread = (Process_Check) ConfAppContext.getBean(Process_Check.class);
+            process_check_runnables.add(checkProcessThread);
+        }
+        ExecutorService process_Execute_check = Executors.newFixedThreadPool(process_check_pool);
+        Process_Check.executeRunnables(process_Execute_check, process_check_runnables);
+
+        // process Delete
+        Process_Delete.setDelete_queue(del_queue);
+        for (int i = 0; i < process_del_num; i++) {
+            Process_Delete delProcessThread = (Process_Delete) ConfAppContext.getBean(Process_Delete.class);
+            process_del_runnables.add(delProcessThread);
+        }
+        ExecutorService process_Execute_del = Executors.newFixedThreadPool(process_del_pool);
+        Process_Delete.executeRunnables(process_Execute_del, process_del_runnables);
+
         // process Guide
         Process_Guide.setGuide_queue(guide_queue);
         for (int i = 0; i < process_guide_num; i++) {

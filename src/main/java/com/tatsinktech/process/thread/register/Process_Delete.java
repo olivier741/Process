@@ -200,6 +200,8 @@ public class Process_Delete implements Runnable {
                                 if (status == 1 || status == 2 ) {
                                     oldReg.setStatus(0);
                                     oldReg.setUnregTime(new Date());
+  
+                                    registerRepo.save(oldReg);
                                     process_mo.setNotificationCode("DEL-PRODUCT-SUCCESS-" + product_code);  // CUSTOMER go from ACTIVE or PENDING to CANCEL ON THAT PRODUCT
                                     mo_his_desc = "DEL-PRODUCT-SUCCESS-" + product_code;
                                     

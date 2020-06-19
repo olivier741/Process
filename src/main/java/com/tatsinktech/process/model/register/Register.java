@@ -79,6 +79,9 @@ public class Register extends AbstractModel<Long> {
 
     @Column(name = "number_reg")
     private long numberReg;
+    
+    @Column(name = "product_code")
+    private String productCode;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "product_id", nullable = true)
