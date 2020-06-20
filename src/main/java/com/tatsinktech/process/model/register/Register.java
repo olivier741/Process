@@ -54,6 +54,7 @@ public class Register extends AbstractModel<Long> {
      * 0 = active|cancel, 
      * 2 = active|pending, 
      * -1= cancel|cancel (state in network|state in service)
+     * -2= active|expire (state in network|offer expire)
      */
     @Column(name = "status")
     private int status;

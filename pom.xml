@@ -226,17 +226,6 @@
               
     <build>
         <finalName>Process</finalName>
-         
-        <resources>
-            <resource>
-                <directory>src/main/resources/META-INF</directory>
-                <targetPath>META-INF</targetPath>
-                <includes>
-                    <include>persistence.xml</include>
-                </includes>
-            </resource>
-           
-        </resources>
        
         <plugins>
            
@@ -343,6 +332,17 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+              <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.5.1</version>
+                <configuration>
+                    <compilerArgs>
+                        <arg>-verbose</arg>
+                        <arg>-parameters</arg>
+                    </compilerArgs>
+                </configuration>
             </plugin>
             
         </plugins>

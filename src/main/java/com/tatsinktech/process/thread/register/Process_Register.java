@@ -120,7 +120,7 @@ public class Process_Register implements Runnable {
             if (process_mo != null) {
                 String msisdn = process_mo.getMsisdn();
                 String transaction_id = process_mo.getTransaction_id();
-                String product_code = process_mo.getProductCode().trim().toUpperCase(); 
+                String product_code = process_mo.getProductCode().trim().toUpperCase();
                 String exchange_mode = process_mo.getExchangeMode().trim().toUpperCase();
                 Timestamp receive_time = process_mo.getReceiveTime();
                 String mo_his_desc = "";
@@ -232,33 +232,32 @@ public class Process_Register implements Runnable {
 
                                 }
                             }
-                        }
-                    } else {
-
-                        if (startFrameTime != null && endFrameTime != null) {
-                            if (startFrameTime.after(endFrameTime)) {
-                                useproduct = 2;               // start time is after end time. wrong time configuration
-                                logger.warn("OFFER :" + product_code + " have START-TIME=" + startFrameTime + " which is after END-TIME =" + endFrameTime);
-                            } else {
+                        } else {
+                            if (startFrameTime != null && endFrameTime != null) {
+                                if (startFrameTime.after(endFrameTime)) {
+                                    useproduct = 2;               // start time is after end time. wrong time configuration
+                                    logger.warn("OFFER :" + product_code + " have START-TIME=" + startFrameTime + " which is after END-TIME =" + endFrameTime);
+                                } else {
+                                    if (startFrameTime.after(receive_time)) {
+                                        useproduct = 3;            // start time is after receive time customer cannot register to product. product not available.
+                                        logger.warn("OFFER :" + product_code + " have START-TIME=" + startFrameTime + " which is after CURRENT-TIME =" + receive_time);
+                                    }
+                                    if (endFrameTime.before(receive_time)) {
+                                        useproduct = 4;            // end time is before receive time customer cannot register to product. product is expire
+                                        logger.warn("OFFER :" + product_code + " have END-TIME=" + endFrameTime + " which is before CURRENT-TIME =" + receive_time);
+                                    }
+                                }
+                            } else if (startFrameTime != null) {
                                 if (startFrameTime.after(receive_time)) {
                                     useproduct = 3;            // start time is after receive time customer cannot register to product. product not available.
                                     logger.warn("OFFER :" + product_code + " have START-TIME=" + startFrameTime + " which is after CURRENT-TIME =" + receive_time);
                                 }
+                            } else if (endFrameTime != null) {
                                 if (endFrameTime.before(receive_time)) {
                                     useproduct = 4;            // end time is before receive time customer cannot register to product. product is expire
                                     logger.warn("OFFER :" + product_code + " have END-TIME=" + endFrameTime + " which is before CURRENT-TIME =" + receive_time);
-                                }
-                            }
-                        } else if (startFrameTime != null) {
-                            if (startFrameTime.after(receive_time)) {
-                                useproduct = 3;            // start time is after receive time customer cannot register to product. product not available.
-                                logger.warn("OFFER :" + product_code + " have START-TIME=" + startFrameTime + " which is after CURRENT-TIME =" + receive_time);
-                            }
-                        } else if (endFrameTime != null) {
-                            if (endFrameTime.before(receive_time)) {
-                                useproduct = 4;            // end time is before receive time customer cannot register to product. product is expire
-                                logger.warn("OFFER :" + product_code + " have END-TIME=" + endFrameTime + " which is before CURRENT-TIME =" + receive_time);
 
+                                }
                             }
                         }
                     }
@@ -301,7 +300,7 @@ public class Process_Register implements Runnable {
                                 if (oldReg != null) {   // override old register
                                     reg = oldReg;
                                     reg.setNumberReg(oldReg.getNumberReg() + 1);
-                                    reg.setRenewTime(new Date());
+                                    reg.setCancelTime(null);
                                     reg.setUnregTime(null);
                                     process_mo.setNotificationCode("REG-PRODUCT-SUCCESS-OVERIDE-" + product_code);
                                     mo_his_desc = "REG-PRODUCT-SUCCESS-OVERIDE-" + product_code;
@@ -325,6 +324,7 @@ public class Process_Register implements Runnable {
 
                             if (reg != null) {
                                 reg.setAutoextend(isextend);
+                                 reg.setRenewTime(new Date());
                                 reg.setExpireTime(expire_time);
                                 reg.setMsisdn(msisdn);
                                 reg.setProduct(product);
@@ -581,7 +581,6 @@ public class Process_Register implements Runnable {
 
                 result = 8;
             }
-            
 
             if (resp == -1) {  // webservice error
                 logger.warn("OFFER :" + product_code + " MSISDN = " + msisdn + " WEBSERVICE FAIL or NOT PROCESS REQUEST");
