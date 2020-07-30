@@ -35,17 +35,29 @@ import lombok.ToString;
 @Table(name = "service")
 public class ServiceProvider extends AbstractModel<Long> {
 
-    @Column(name="service_name",nullable = false, unique = true)
+      @Column(name = "service_name", nullable = false, unique = true)
     private String serviceName;
-    
-    @Column(name="receive_channel",nullable = true)
+
+    @Column(name = "receive_channel", nullable = true)
     private String receiveChannel;
-    
-    @Column(name="send_channel",nullable = true)
+
+    @Column(name = "send_channel", nullable = true)
     private String sendChannel;
-    
-    @Column(name="service_provider",nullable = true)
+
+    @Column(name = "service_provider", nullable = true)
     private String serviceProvider;
+    
+    @Column(name = "operator", nullable = true)
+    private String operator;
+
+    @Column(name = "isResetProviderID", nullable = true)
+    private Boolean isResetProviderID;
+
+    @Column(name = "service_provider_id", nullable = true)
+    private String serviceProviderID;
+
+    @Column(name = "service_provider_salt", nullable = true)
+    private String serviceProviderSalt;
     
 
     @OneToMany(mappedBy = "service")
